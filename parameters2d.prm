@@ -151,7 +151,7 @@ subsection Solid Dirichlet BCs
   set Number of Dirichlet BCs = 2
 
   # List all the constrained boundaries here
-  set Dirichlet boundary id = 11, 14
+  set Dirichlet boundary id = 40, 42
 
   # List the constrained components of these boundaries
   # One decimal number indicates one set of constrained components:
