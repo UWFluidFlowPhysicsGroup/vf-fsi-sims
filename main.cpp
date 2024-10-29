@@ -40,8 +40,8 @@ extern template class FSI<3>;
 using namespace dealii;
 
 namespace {
-const std::string simMeshSolid = "vfSolid";
-const std::string simMeshFluid = "vfFluid";
+const std::string simMeshSolid = "FSIChannelSolid_0.04cm";
+const std::string simMeshFluid = "FSIChannelFluid2";
 const std::string meshPath = "meshes/";
 //TODO simplify parameters strings existing - leave to only 2d form for now?
 const std::string paramsPath2d = "parameters2d.prm";
@@ -66,14 +66,22 @@ int loadMesh2d(std::string meshNameSolid, std::string meshNameFluid){
   std::ifstream solidPath(meshPath + meshNameSolid + ".msh");
   std::ifstream fluidPath(meshPath + meshNameFluid + ".msh");
   //checks if desired mesh can be read
-  if (!solidPath || !fluidPath){
+  if (!solidPath){
+    //Display error handler that the solid mesh cannot be found
+    std::cerr << "----------------------------------------------------"
+              << "ERROR FINDING SOLID MESH FILE " << meshNameSolid 
+              << "----------------------------------------------------";
+    //return to kill the class
+    return -1;
+  } else if (!fluidPath){
     //Display error handler that file cannot be found
     std::cerr << "----------------------------------------------------"
-              << "ERROR FINDING MESH FILES " << meshNameSolid << " OR " << meshNameFluid
+              << "ERROR FINDING FLUID MESH FILE " << meshNameFluid
               << "----------------------------------------------------";
     //return to kill the class
     return -1;
   }
+
 
 
   //TODO write if statement to check if 2d or 3d mesh being imported, maybe try catch as 3d and have 2d in the catch segment and merge with extrude class?
