@@ -40,8 +40,9 @@ extern template class FSI<3>;
 using namespace dealii;
 
 namespace {
-const std::string simMeshSolid = "FSIChannelSolid_0.04cm";
-const std::string simMeshFluid = "FSIChannelFluid2";
+const std::string simMeshSolid = "FSIChannelSolid";
+//Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
+const std::string simMeshFluid[] = {"FSIChannelFluid3"};
 const std::string meshPath = "meshes/";
 //TODO simplify parameters strings existing - leave to only 2d form for now?
 const std::string paramsPath2d = "parameters2d.prm";
@@ -177,11 +178,26 @@ int refine(int i){
 
 
 int main(){
-  loadMesh2d(simMeshSolid, simMeshFluid);
-  importParams2d(paramsPath2d);
-  
-  //extrude();
-  //for(int i = 1; i <= 3; i++){
-  //  refine(i);
-  //}
+  //iterate through each fluid mesh that was given
+  for(const string &meshFluid : simMeshFluid){
+    //load meshes through loadMesh class
+    loadMesh2d(simMeshSolid, meshFluid);
+    //import parameters through importParams class
+    importParams2d(paramsPath2d);
+    
+    //define path to current file location
+    std::filesystem::path p = std::filesystem::current_path();
+    //create folder with a title corresponding to the current fluid mesh name
+    std::filesystem::create_directory(p / meshFluid);
+
+    //iterate through each file in the main directory
+    for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
+      //checks if each file is a .vtu or .pvd file
+      //since these are main outputs for each test case, want to move them somewhere safe before starting another simulation
+      if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd"){
+        //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
+        std::filesystem::rename(p / dirEntry.path().filename(), p / meshFluid / dirEntry.path().filename());
+      }
+    }
+  }
 }
