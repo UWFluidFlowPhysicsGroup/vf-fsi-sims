@@ -40,9 +40,9 @@ extern template class FSI<3>;
 using namespace dealii;
 
 namespace {
-const std::string simMeshSolid = "FSIChannelSolid";
+const std::string simMeshSolid[] = {"FSIChannelSolid_20_2", "FSIChannelSolid_20_1", "FSIChannelSolid_20_0.5"};
 //Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
-const std::string simMeshFluid[] = {"FSIChannelFluid3"};
+const std::string simMeshFluid = "FSIChannelFluid";
 const std::string meshPath = "meshes/";
 //TODO simplify parameters strings existing - leave to only 2d form for now?
 const std::string paramsPath2d = "parameters2d.prm";
@@ -179,24 +179,24 @@ int refine(int i){
 
 int main(){
   //iterate through each fluid mesh that was given
-  for(const string &meshFluid : simMeshFluid){
+  for(const std::string &meshSolid : simMeshSolid){
     //load meshes through loadMesh class
-    loadMesh2d(simMeshSolid, meshFluid);
+    loadMesh2d(meshSolid, simMeshFluid);
     //import parameters through importParams class
     importParams2d(paramsPath2d);
     
     //define path to current file location
     std::filesystem::path p = std::filesystem::current_path();
     //create folder with a title corresponding to the current fluid mesh name
-    std::filesystem::create_directory(p / meshFluid);
+    std::filesystem::create_directory(p / meshSolid);
 
-    //iterate through each file in the main directory
+    //iterate through each file in the main directory 
     for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
       //checks if each file is a .vtu or .pvd file
       //since these are main outputs for each test case, want to move them somewhere safe before starting another simulation
       if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd"){
         //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
-        std::filesystem::rename(p / dirEntry.path().filename(), p / meshFluid / dirEntry.path().filename());
+        std::filesystem::rename(p / dirEntry.path().filename(), p / meshSolid / dirEntry.path().filename());
       }
     }
   }
