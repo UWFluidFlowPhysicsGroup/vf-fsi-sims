@@ -45,7 +45,7 @@ class Sim{
 public:
   //extern template class Solid::LinearElasticity<dim>;
   Sim();
-  int loadMesh(std::string meshNameSolid, std::string meshNameFluid);
+  int loadMesh(std::string meshNameFluid);
   int setParams(Parameters::AllParameters params);
   Triangulation<3> extrude();
   int refine(int refinement);
@@ -56,11 +56,11 @@ private:
 };
 
 namespace {
-const std::string simMeshSolid = "leafletSolid";
+//const std::string simMeshSolid = "leafletSolid";
 //Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
-const std::string simMeshFluid[] = {"leafletFluid_1799"};
+const std::string simMeshFluid[] = {"ThroatOpen1mm","ThroatOpen3mm","ThroatOpen5mm"};
 const std::string meshPath = "meshes/";
-const std::string paramsPath = "fsi_leaflet.prm";
+const std::string paramsPath = "parameters.prm";
 GridOut gridOut;
 }
 
@@ -72,24 +72,24 @@ Sim<dim>::Sim()
 
 //imports a mesh and outputs svg file in the XY plane
 template <int dim>
-int Sim<dim>::loadMesh(std::string meshNameSolid, std::string meshNameFluid){
+int Sim<dim>::loadMesh(std::string meshNameFluid){
   //identifies mesh to be imported from meshes folder
-  std::ifstream solidPath(meshPath + meshNameSolid + ".msh");
+  //std::ifstream solidPath(meshPath + meshNameSolid + ".msh");
   std::ifstream fluidPath(meshPath + meshNameFluid + ".msh");
   //checks if desired mesh can be read
-  if (!solidPath || !fluidPath){
+  if (!fluidPath){
     //Display error handler that file cannot be found
     std::cerr << "----------------------------------------------------"
-              << "ERROR FINDING MESH FILES " << meshNameSolid << " OR " << meshNameFluid
+              << "ERROR FINDING MESH FILES " << " OR " << meshNameFluid
               << "----------------------------------------------------";
     //return to kill the class
     return 1;
   }
 
   //define GridIn object to receive 2d mesh
-  gridIn.attach_triangulation(triaSolid);
+  //gridIn.attach_triangulation(triaSolid);
   //imports mesh from selected area
-  gridIn.read_msh(solidPath);
+  //gridIn.read_msh(solidPath);
   
   //repeat same for fluid mesh
   gridIn.attach_triangulation(triaFluid);
@@ -108,11 +108,12 @@ int Sim<dim>::loadMesh(std::string meshNameSolid, std::string meshNameFluid){
 template <int dim>
 int Sim<dim>::setParams(Parameters::AllParameters params){
   //import params for both solid and fluid meshes separately
-  Solid::LinearElasticity<dim> solid(triaSolid, params);
+  //Solid::LinearElasticity<dim> solid(triaSolid, params);
   Fluid::InsIM<dim> fluid(triaFluid, params);
   //combine solid and fluid meshes to make FSI simulation
-  FSI<dim> fsi(fluid, solid, params, true);
-  fsi.run();
+  fluid.run();
+  //FSI<dim> fsi(fluid, solid, params, true);
+  //fsi.run();
   
   return 0;
 }
@@ -128,7 +129,7 @@ int main(){
     //the value of ‘dims’ is not usable in a constant expression
     if (params.dimension == 2){
       Sim<2> sim;
-      sim.loadMesh(simMeshSolid, meshFluid);
+      sim.loadMesh(meshFluid);
       sim.setParams(params);
 
       /*Keeping extrude and refine functions commented out for future reference
@@ -138,7 +139,7 @@ int main(){
       } */ 
     } else if (params.dimension == 3){
       Sim<3> sim;
-      sim.loadMesh(simMeshSolid, meshFluid);
+      sim.loadMesh(meshFluid);
       sim.setParams(params);
       
       /*
