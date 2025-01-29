@@ -18,13 +18,13 @@ subsection Simulation
   set Global refinements = 0, 0
 
   # The end time of the simulation in second
-  set End time = 5e-1
+  set End time = 5e-3
 
   # The time step in second
-  set Time step size = 2e-4
+  set Time step size = 1e-4
 
   # The output interval frequency
-  set Output interval = 2e-4
+  set Output interval = 1e-4
 
   # Mesh refinement interval in second
   set Refinement interval = 1000
