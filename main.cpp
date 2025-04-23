@@ -122,9 +122,22 @@ int Sim<dim>::setParams(Parameters::AllParameters params){
 
 int main(){
   //Variables and principal matrix creation
-  double E1, E2, G12, mu12, mu32;
-  //dim not really needed, but would be good to add for 2D case
-  unsigned int dim = 3;
+  double E1 = 0, E2 = 0, G12 = 0, mu12 = 0, mu32 = 0;
+  //TODO import variable values from parameters, hard coding for now
+  E1 = 10;
+  E2 = 1;
+  
+  //TODO replace this dim var with dim obtained from template
+  const int dim = 2;
+  //creating array to get fiber coordinates before creating tensor (trying to simulate reading from parameter file)
+  double fiberCoords[dim];
+  fiberCoords[0] = 1;
+  fiberCoords[1] = 1;
+  //define z axis only for 3D case (otherwise out of bounds)
+  if (dim == 3){
+    fiberCoords[2] = 0;
+  }
+
   //linear_elastic_material uses symmetric tensor named "elasticity", keeping same for convenience with integration
   SymmetricTensor<4, dim> elasticity;
   
@@ -132,6 +145,7 @@ int main(){
   TODO create JSON files that map the results of each if statement condition in 4d space, comprised of 1 and 0s (pseudo identity matrix)
   Then just run through each material type, multiply by that mapping matrix and add to elasticity matrix
   */
+  
   for (unsigned int i = 0; i < dim; ++i)
       {
         for (unsigned int j = 0; j < dim; ++j)
@@ -141,34 +155,33 @@ int main(){
                 for (unsigned int l = 0; l < dim; ++l)
                   {
                     //TODO create if else statement for each case for the equivalent Voigt notation for ij and kl
-
                     //S11
-                    if (i==1 && j==1 && k==1 && l==1)
+                    if (i==0 && j==0 && k==0 && l==0)
                     {
                       elasticity[i][j][k][l] = 1/E1;
                     }
                     //S22, S33
-                    else if ((i==2 && j==2 && k==2 && l==2)||(i==3 && j==3 && k==3 && l==3))
+                    else if ((i==1 && j==1 && k==1 && l==1)||(i==2 && j==2 && k==2 && l==2))
                     {
                       elasticity[i][j][k][l] = 1/E2;
                     }
                     //S12=S13
-                    else if (((i==1 && j==1) && ((k==2 && l==2)||(k==3 && l==3)))||(((i==2 && j==2)||(i==3 && j==3)) && (k==1 && l==1)))
+                    else if (((i==0 && j==0) && ((k==1 && l==1)||(k==2 && l==2)))||(((i==1 && j==1)||(i==2 && j==2)) && (k==0 && l==0)))
                     {
                       elasticity[i][j][k][l] = -mu12/E1;
                     }
                     //S23
-                    else if (((i==2 && j==2) && (k==3 && l==3)) || ((i==3 && j==3) && (k==2 && l==2)))
+                    else if (((i==1 && j==1) && (k==2 && l==2)) || ((i==2 && j==2) && (k==1 && l==1)))
                     {
                       elasticity[i][j][k][l] = -mu32/E2;
                     }
                     //S44
-                    else if (((i==2 && j==3) || (i==3 && j==2)) && ((k==2 && l==3) || (k==3 && l==2)))
+                    else if (((i==1 && j==2) || (i==2 && j==1)) && ((k==1 && l==2) || (k==2 && l==1)))
                     {
                       elasticity[i][j][k][l] = E2/(2*(1-mu12));
                     }
                     //S55=S66
-                    else if (((i==1 && j==3) || (i==3 && j==1)) && ((k==1 && l==3) || (k==3 && l==1))||((i==1 && j==2) || (i==2 && j==1)) && ((k==1 && l==2) || (k==2 && l==1)))
+                    else if (((i==0 && j==2) || (i==2 && j==0)) && ((k==0 && l==2) || (k==2 && l==0))||((i==0 && j==1) || (i==1 && j==0)) && ((k==0 && l==1) || (k==1 && l==0)))
                     {
                       elasticity[i][j][k][l] = 1/G12;
                     }
@@ -176,110 +189,88 @@ int main(){
               }
           }
       }
-  
-
-      //Rotation matrix (not symmetric), contains coordinate system for fiber in global coordinates
-      Tensor<2, dim> R;
       
-      //Fiber coordinate system tensor, 1st column is the fiber direction, other two dimensions are undefined for now, will be found shortly
-      Tensor<1, dim> fiber({1, 1, 0});
-      /*
-      fiber[0][0] = 1;
-      fiber[1][0] = 1;
-      fiber[2][0] = 0;
-      */
+    //create rotation tensor R, size depends on dimension
+    Tensor<2, dim> R;
+    //create fiber direction vector and import assigned values from parameters list
 
-      //brute forced, cannot call subset of identity matrix easily (ex, identity(:,1) as in MATLAB)
-      Tensor<1, dim> xaxis({1, 0, 0});
-      Tensor<1, dim> yaxis({0, 1, 0});
-      Tensor<1, dim> zaxis({0, 0, 1});
-      /*
-      Tensor<1, 3> xaxis;
-      xaxis[0] = 1;
-      xaxis[1] = 0;
-      xaxis[2] = 0;
-      Tensor<1, 3> yaxis;
-      yaxis[0] = 0;
-      yaxis[1] = 1;
-      yaxis[2] = 0;
-      Tensor<1, 3> zaxis;
-      zaxis[0] = 0;
-      zaxis[1] = 0;
-      zaxis[2] = 1;
-      */
-
-      //checks if fiber is parallel to z axis
-      //Tensor<1, 3> ref;
-
-      //declare 1st perpendicular fiber vector
-      Tensor<1, dim> fiberP1;
-      /*both inputs for angle need to be Tensor<1, dim>
-      https://www.dealii.org/current/doxygen/deal.II/namespacePhysics_1_1VectorRelations.html#a9f05135611d90ad209c97bd73a4c4d20
-      */
-      //Need to fix calling of identity matrix, need to make a sub tensor
-      //use y axis if fiber is along x axis direction, otherwise use x
-      //TODO need to fix or add something for 2D case?
-      if (Physics::VectorRelations::angle(fiber, xaxis) == 0){
-        fiberP1[0] = fiber[1]*yaxis[2]-fiber[2]*yaxis[1];
-        fiberP1[1] = -(fiber[0]*yaxis[2]-fiber[2]*yaxis[0]);
-        fiberP1[2] = fiber[0]*yaxis[1]-fiber[1]*yaxis[0];
-      }else{
-        fiberP1[0] = fiber[1]*xaxis[2]-fiber[2]*xaxis[1];
-        fiberP1[1] = -(fiber[0]*xaxis[2]-fiber[2]*xaxis[0]);
-        fiberP1[2] = fiber[0]*xaxis[1]-fiber[1]*xaxis[0];
+    if (dim == 2){
+      Tensor<1, 2> fiber;
+      for(int i = 0; i < dim; i++){
+        fiber[i] = fiberCoords[i];
       }
 
+      //defining x axis to find rotation matrix
+      Tensor<1, 2> xaxis({1, 0});
+
+      //can obtain 2d rotation tensor directly using sin and cos wrt x axis
+      R[0][0] = cos(Physics::VectorRelations::angle(fiber, xaxis));
+      R[0][1] = sin(Physics::VectorRelations::angle(fiber, xaxis));
+      R[1][0] = -sin(Physics::VectorRelations::angle(fiber, xaxis));
+      R[1][1] = cos(Physics::VectorRelations::angle(fiber, xaxis));
+
+      /* int angleTest = Physics::VectorRelations::angle(fiber, xaxis);
+      std::cout << angleTest << "\n";
+      
+      //display rotation tensor for debugging
+      std::cout << R[0][0] << " " << R[1][0] <<  "\n"
+      << R[0][1] << " " << R[1][1] <<"\n"; */
+    } else {
+      //brute forced, cannot call subset of identity matrix easily (ex, identity(:,1) as in MATLAB)
+      Tensor<1, 3> fiber;
+      for(int i = 0; i < dim; i++){
+        fiber[i] = fiberCoords[i];
+      }
+      
+      Tensor<1, 3> xaxis({1, 0, 0});
+      Tensor<1, 3> yaxis({0, 1, 0});
+      Tensor<1, 3> zaxis({0, 0, 1});
+
+      //declare 1st perpendicular fiber vector
+      Tensor<1, 3> fiberP1;
+      /*both inputs for angle need to be Tensor<1, dim>, cannot call a portion of 3x3 tensor so each vector has to be declared separately
+      https://www.dealii.org/current/doxygen/deal.II/namespacePhysics_1_1VectorRelations.html#a9f05135611d90ad209c97bd73a4c4d20
+      */
+      
+      //use z axis as reference axis unless fiber is parallel to z, then use y
+      //For 2D case fiber direciton will always be perpendicular to z axis
+      Tensor<1, 3> ref;
+      if (cos(Physics::VectorRelations::angle(fiber, xaxis)) == 1){
+        ref = yaxis;
+      }else{
+        ref = zaxis;   
+      }
+
+      fiberP1[0] = fiber[1]*ref[2]-fiber[2]*ref[1];
+      fiberP1[1] = -(fiber[0]*ref[2]-fiber[2]*ref[0]);
+      fiberP1[2] = fiber[0]*ref[1]-fiber[1]*ref[0];
+
       //take cross product of fiber and fiberP1 to find fiberP2
-      Tensor<1, dim> fiberP2;
+      //TODO not needed for dim = 2 since this will be z axis?
+      Tensor<1, 3> fiberP2;
       fiberP2[0] = fiber[1]*fiberP1[2]-fiber[2]*fiberP1[1];
       fiberP2[1] = -(fiber[0]*fiberP1[2]-fiber[2]*fiberP1[0]);
       fiberP2[2] = fiber[0]*fiberP1[1]-fiber[1]*fiberP1[0];
       
-      //cannot use for loop here, since calling on different tensors
-      //counters for rotation matrix positions, need to find better way to do this
-      //not working for now, need to look at documentation
-      /*int i = 0, j = 0;
-      for (Tensor<1, 3> u = {fiber, fiberP1, fiberP2};){
-        //reset value of j for next loop
-        j=0;
-        for (Tensor<1, 3> v = {xaxis, yaxis, zaxis};){
-          //Need to find how to identify back to rotation matrix location
-          R[i][j] = cos(Physics::VectorRelations::angle(u, v));
-          j++;
+      //create array for fiber and global coordinate systems
+      Tensor<1, 3> fiberC[3] = {fiber, fiberP1, fiberP2};
+      Tensor<1, 3> globalC[3] = {xaxis, yaxis, zaxis};
+      for (unsigned int i = 0; i < dim; i++){
+        for (unsigned int j = 0; j < dim; j++){
+          R[i][j] = cos(Physics::VectorRelations::angle(fiberC[i], globalC[j]));
         }
-        i++;
       }
-      */
 
-
-      R[0][0] = cos(Physics::VectorRelations::angle(fiber, xaxis));
-      R[0][1] = cos(Physics::VectorRelations::angle(fiber, yaxis));
-      R[0][2] = cos(Physics::VectorRelations::angle(fiber, zaxis));
-      R[1][0] = cos(Physics::VectorRelations::angle(fiberP1, xaxis));
-      R[1][1] = cos(Physics::VectorRelations::angle(fiberP1, yaxis));
-      R[1][2] = cos(Physics::VectorRelations::angle(fiberP1, zaxis));
-      R[2][0] = cos(Physics::VectorRelations::angle(fiberP2, xaxis));
-      R[2][1] = cos(Physics::VectorRelations::angle(fiberP2, yaxis));
-      R[2][2] = cos(Physics::VectorRelations::angle(fiberP2, zaxis));
+      /* int angleTest = Physics::VectorRelations::angle(fiber, xaxis);
+      std::cout << angleTest << "\n";
 
       std::cout << R[0][0] << " " << R[1][0] << " " << R[2][0] << "\n"
       << R[0][1] << " " << R[1][1] << " " << R[2][1] << "\n"
-      << R[0][2] << " " << R[1][2] << " " << R[2][2] << "\n";
-      
-      /*
-      for (unsigned int i = 0; i < dim; ++i)
-      {
-        for (unsigned int j = 0; j < dim; ++j)
-          {
-            R[i][j] = cos(Physics::VectorRelations::angle(fiber[i], identity[j]));
-          }
-      }
-      */
-      Tensor<4, dim> elasticityCartesian;
-      //Rotate elasticity tensor to cartesian global coordinates
-      elasticityCartesian = R*R*elasticity*transpose(R)*transpose(R);
-
-
+      << R[0][2] << " " << R[1][2] << " " << R[2][2] << "\n"; */
+    }
+  Tensor<4, dim> elasticityCartesian;
+  //Rotate elasticity tensor to cartesian global coordinates
+  elasticityCartesian = R*R*elasticity*transpose(R)*transpose(R);
 
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
@@ -291,7 +282,7 @@ int main(){
     if (params.dimension == 2){
       Sim<2> sim;
       sim.loadMesh(simMeshSolid, meshFluid);
-      sim.setParams(params);
+      //sim.setParams(params);
 
       /*Keeping extrude and refine functions commented out for future reference
       sim.extrude();
@@ -301,12 +292,13 @@ int main(){
     } else if (params.dimension == 3){
       Sim<3> sim;
       sim.loadMesh(simMeshSolid, meshFluid);
-      sim.setParams(params);
+      //sim.setParams(params);
       
       /*
       for(int i = 1; i <= 2; i++){
         sim.refine(i);
-      }*/
+      }
+      */
     } else {
       std::cerr << "Cannot find dimension from parameters file" << std::endl
                 << "Check if " << paramsPath << "exists";
