@@ -168,7 +168,7 @@ subsection Solid Neumann BCs
   set Number of Neumann BCs = 1
 
   # The id, type, and values must appear n_neumann_bcs times.
-  set Neumann boundary id = 7
+  set Neumann boundary id = 8
 
   # Traction/Pressure, currently they cannot coexist.
   set Neumann boundary type = Traction

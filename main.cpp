@@ -56,7 +56,7 @@ private:
 };
 
 namespace {
-const std::string simMeshSolid = "50x1000Beam";
+const std::string simMeshSolid = "SquareMesh";
 //Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
 //const std::string simMeshFluid[] = {"leafletFluid_1799"};
 const std::string meshPath = "meshes/";
