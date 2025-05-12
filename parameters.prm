@@ -8,7 +8,7 @@
 # Simulation parameters
 subsection Simulation
   # Type of simulation: FSI/Fluid/Solid
-  set Simulation type =  FSI
+  set Simulation type =  Solid
 
   # The dimension of the simulation
   set Dimension = 2
@@ -18,13 +18,13 @@ subsection Simulation
   set Global refinements = 0, 0
 
   # The end time of the simulation in second
-  set End time = 2e0
+  set End time = 1e0
 
   # The time step in second
   set Time step size = 1e-2
 
   # The output interval frequency
-  set Output interval = 1
+  set Output interval = 1e-2
 
   # Mesh refinement interval in second
   set Refinement interval = 1000
@@ -40,7 +40,7 @@ subsection Simulation
   
   # Set condition for calculating indicator field (only applied to OpenIFEM-SABLE Coupling)
   # Options: CompletelyInsideSolid and PartiallyInsideSolid
-  set Indicator field condition = CompletelyInsideSolid
+  # set Indicator field condition = CompletelyInsideSolid
 end
 
 # --------------------------------------------------------------------------------
@@ -80,20 +80,20 @@ subsection Fluid Dirichlet BCs
   set Use hard-coded boundary values = 0
 
   # Number of boundaries with Dirichlet BCs
-  set Number of Dirichlet BCs = 3
+  set Number of Dirichlet BCs = 1
 
   # List all the boundaries with Dirichlet BCs
-  set Dirichlet boundary id = 10, 11, 13
+  set Dirichlet boundary id = 0
 
   # List the constrained components of these boundaries
   # One decimal number indicates one set of constrained components:
   # 1-x, 2-y, 3-xy, 4-z, 5-xz, 6-yz, 7-xyz
   # To make sense of the numbering, convert decimals to binaries (zyx)
-  set Dirichlet boundary components = 3, 2, 3
+  set Dirichlet boundary components = 1
 
   # Specify the values of the Dirichlet BCs, including both homogeneous and
   # inhomogeneous ones. (cm s^-1)
-  set Dirichlet boundary values = 10, 0, 0, 0, 0
+  set Dirichlet boundary values = 0
 end
 
 subsection Fluid Neumann BCs
@@ -123,9 +123,9 @@ subsection Solid material properties
   set Solid density = 2.7
 
   # E and nu are only used by linearElasticMaterial
-  set Young's modulus = 1e5
+  set Young's modulus = 70e9
 
-  set Poisson's ratio = 0.25
+  set Poisson's ratio = 0
 
   # A list of parameters used by hyperelasticMaterial
   set Hyperelastic parameters = 0.5, 1.67
@@ -133,7 +133,7 @@ end
 
 subsection Solid solver control
   # Artifitial damping. (unsure, but probably dyne cm^-1) (10^-3 N m^-1)
-  set Damping = 0.0
+  set Damping = 1
 
   # Number of Newton-Raphson iterations allowed, used by hyperelastic solver only
   set Max Newton iterations = 10
@@ -148,10 +148,10 @@ end
 # Only homogeneous Dirichlet BC is supported, i.e., the prescribed value is always 0.
 subsection Solid Dirichlet BCs
   # Dirichlet BCs can be applied to multiple boundaries.
-  set Number of Dirichlet BCs = 0
+  set Number of Dirichlet BCs = 1
 
   # List all the constrained boundaries here
-  set Dirichlet boundary id = 21
+  set Dirichlet boundary id = 6
 
   # List the constrained components of these boundaries
   # One decimal number indicates one set of constrained components:
@@ -165,10 +165,10 @@ end
 # (Original normal vectors are used to compute the traction.)
 subsection Solid Neumann BCs
   # Indicates how many sets of Neumann boundary conditions to expect.
-  set Number of Neumann BCs = 0
+  set Number of Neumann BCs = 1
 
   # The id, type, and values must appear n_neumann_bcs times.
-  set Neumann boundary id = 8
+  set Neumann boundary id = 7
 
   # Traction/Pressure, currently they cannot coexist.
   set Neumann boundary type = Traction
@@ -176,5 +176,5 @@ subsection Solid Neumann BCs
   # If traction, dim*n_solid_neumann_bcs components are expected;
   # if pressure, n_solid_neumann_bcs components are expected. (dyne cm^-2) -> (0.1Pa)
   # traction sets values in x, y, z directions, pressure sets normal to original face direction
-  set Neumann boundary values = 0, 0
+  set Neumann boundary values = 10000, 0
 end

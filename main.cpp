@@ -45,7 +45,7 @@ class Sim{
 public:
   //extern template class Solid::LinearElasticity<dim>;
   Sim();
-  int loadMesh(std::string meshNameSolid, std::string meshNameFluid);
+  int loadMesh(std::string meshNameSolid);
   int setParams(Parameters::AllParameters params);
   Triangulation<3> extrude();
   int refine(int refinement);
@@ -56,11 +56,11 @@ private:
 };
 
 namespace {
-const std::string simMeshSolid = "leafletSolid";
+const std::string simMeshSolid = "50x1000Beam";
 //Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
-const std::string simMeshFluid[] = {"leafletFluid_1799"};
+//const std::string simMeshFluid[] = {"leafletFluid_1799"};
 const std::string meshPath = "meshes/";
-const std::string paramsPath = "fsi_leaflet.prm";
+const std::string paramsPath = "parameters.prm";
 GridOut gridOut;
 }
 
@@ -72,15 +72,14 @@ Sim<dim>::Sim()
 
 //imports a mesh and outputs svg file in the XY plane
 template <int dim>
-int Sim<dim>::loadMesh(std::string meshNameSolid, std::string meshNameFluid){
+int Sim<dim>::loadMesh(std::string meshNameSolid){
   //identifies mesh to be imported from meshes folder
   std::ifstream solidPath(meshPath + meshNameSolid + ".msh");
-  std::ifstream fluidPath(meshPath + meshNameFluid + ".msh");
   //checks if desired mesh can be read
-  if (!solidPath || !fluidPath){
+  if (!solidPath){
     //Display error handler that file cannot be found
     std::cerr << "----------------------------------------------------"
-              << "ERROR FINDING MESH FILES " << meshNameSolid << " OR " << meshNameFluid
+              << "ERROR FINDING MESH FILE " << meshNameSolid 
               << "----------------------------------------------------";
     //return to kill the class
     return 1;
@@ -90,10 +89,6 @@ int Sim<dim>::loadMesh(std::string meshNameSolid, std::string meshNameFluid){
   gridIn.attach_triangulation(triaSolid);
   //imports mesh from selected area
   gridIn.read_msh(solidPath);
-  
-  //repeat same for fluid mesh
-  gridIn.attach_triangulation(triaFluid);
-  gridIn.read_msh(fluidPath);
 
   //Exports meshes to .msh file for debugging
   /*
@@ -109,10 +104,11 @@ template <int dim>
 int Sim<dim>::setParams(Parameters::AllParameters params){
   //import params for both solid and fluid meshes separately
   Solid::LinearElasticity<dim> solid(triaSolid, params);
-  Fluid::InsIM<dim> fluid(triaFluid, params);
+  solid.run();
+  //Fluid::InsIM<dim> fluid(triaFluid, params);
   //combine solid and fluid meshes to make FSI simulation
-  FSI<dim> fsi(fluid, solid, params, true);
-  fsi.run();
+  //FSI<dim> fsi(fluid, solid, params, true);
+  //fsi.run();
   
   return 0;
 }
@@ -123,12 +119,12 @@ int main(){
   Parameters::AllParameters params(paramsPath);
   
   //iterate through each fluid mesh that was given
-  for(const std::string &meshFluid : simMeshFluid){
+  //for(const std::string &meshFluid : simMeshFluid){
     //This section has to be hard coded, since the creation of the Sim object requires a constant variable input
     //the value of ‘dims’ is not usable in a constant expression
     if (params.dimension == 2){
       Sim<2> sim;
-      sim.loadMesh(simMeshSolid, meshFluid);
+      sim.loadMesh(simMeshSolid);
       sim.setParams(params);
 
       /*Keeping extrude and refine functions commented out for future reference
@@ -138,7 +134,7 @@ int main(){
       } */ 
     } else if (params.dimension == 3){
       Sim<3> sim;
-      sim.loadMesh(simMeshSolid, meshFluid);
+      sim.loadMesh(simMeshSolid);
       sim.setParams(params);
       
       /*
@@ -150,22 +146,6 @@ int main(){
                 << "Check if " << paramsPath << "exists";
       return 1;
     }
-
-    //define path to current file location
-    std::filesystem::path p = std::filesystem::current_path();
-    //create folder with a title corresponding to the current fluid mesh name
-    std::filesystem::create_directory(p / meshFluid);
-
-    //iterate through each file in the main directory
-    for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
-      //checks if each file is a .vtu or .pvd file
-      //since these are main outputs for each test case, want to move them somewhere safe before starting another simulation
-      if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd"){
-        //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
-        std::filesystem::rename(p / dirEntry.path().filename(), p / meshFluid / dirEntry.path().filename());
-      }
-    }
-  }
 }
 
 /*
