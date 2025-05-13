@@ -121,23 +121,15 @@ int Sim<dim>::setParams(Parameters::AllParameters params){
 
 
 int main(){
+  //TODO remove dim when importing to OpenIFEM code
+  const int dim = 2;
+
   //Variables and principal matrix creation
   double E1 = 0, E2 = 0, G12 = 0, mu12 = 0, mu32 = 0;
   //TODO import variable values from parameters, hard coding for now
   E1 = 10;
   E2 = 1;
   
-  //TODO replace this dim var with dim obtained from template
-  const int dim = 2;
-  //creating array to get fiber coordinates before creating tensor (trying to simulate reading from parameter file)
-  double fiberCoords[dim];
-  fiberCoords[0] = 1;
-  fiberCoords[1] = 1;
-  //define z axis only for 3D case (otherwise out of bounds)
-  if (dim == 3){
-    fiberCoords[2] = 0;
-  }
-
   //linear_elastic_material uses symmetric tensor named "elasticity", keeping same for convenience with integration
   SymmetricTensor<4, dim> elasticity;
   
@@ -189,160 +181,56 @@ int main(){
               }
           }
       }
-      
-    //create rotation tensor R, size depends on dimension
-    Tensor<2, dim> R;
-    //create fiber direction vector and import assigned values from parameters list
-
-    if (dim == 2){
-      Tensor<1, 2> fiber;
-      for(int i = 0; i < dim; i++){
-        fiber[i] = fiberCoords[i];
-      }
-
-      //defining x axis to find rotation matrix
-      Tensor<1, 2> xaxis({1, 0});
-
-      //can obtain 2d rotation tensor directly using sin and cos wrt x axis
-      R[0][0] = cos(Physics::VectorRelations::angle(fiber, xaxis));
-      R[0][1] = sin(Physics::VectorRelations::angle(fiber, xaxis));
-      R[1][0] = -sin(Physics::VectorRelations::angle(fiber, xaxis));
-      R[1][1] = cos(Physics::VectorRelations::angle(fiber, xaxis));
-
-      /* int angleTest = Physics::VectorRelations::angle(fiber, xaxis);
-      std::cout << angleTest << "\n";
-      
-      //display rotation tensor for debugging
-      std::cout << R[0][0] << " " << R[1][0] <<  "\n"
-      << R[0][1] << " " << R[1][1] <<"\n"; */
-    } else {
-      //brute forced, cannot call subset of identity matrix easily (ex, identity(:,1) as in MATLAB)
-      Tensor<1, 3> fiber;
-      for(int i = 0; i < dim; i++){
-        fiber[i] = fiberCoords[i];
-      }
-      
-      Tensor<1, 3> xaxis({1, 0, 0});
-      Tensor<1, 3> yaxis({0, 1, 0});
-      Tensor<1, 3> zaxis({0, 0, 1});
-
-      //declare 1st perpendicular fiber vector
-      Tensor<1, 3> fiberP1;
-      /*both inputs for angle need to be Tensor<1, dim>, cannot call a portion of 3x3 tensor so each vector has to be declared separately
-      https://www.dealii.org/current/doxygen/deal.II/namespacePhysics_1_1VectorRelations.html#a9f05135611d90ad209c97bd73a4c4d20
-      */
-      
-      //use z axis as reference axis unless fiber is parallel to z, then use y
-      //For 2D case fiber direciton will always be perpendicular to z axis
-      Tensor<1, 3> ref;
-      if (cos(Physics::VectorRelations::angle(fiber, xaxis)) == 1){
-        ref = yaxis;
-      }else{
-        ref = zaxis;   
-      }
-
-      fiberP1[0] = fiber[1]*ref[2]-fiber[2]*ref[1];
-      fiberP1[1] = -(fiber[0]*ref[2]-fiber[2]*ref[0]);
-      fiberP1[2] = fiber[0]*ref[1]-fiber[1]*ref[0];
-
-      //take cross product of fiber and fiberP1 to find fiberP2
-      //TODO not needed for dim = 2 since this will be z axis?
-      Tensor<1, 3> fiberP2;
-      fiberP2[0] = fiber[1]*fiberP1[2]-fiber[2]*fiberP1[1];
-      fiberP2[1] = -(fiber[0]*fiberP1[2]-fiber[2]*fiberP1[0]);
-      fiberP2[2] = fiber[0]*fiberP1[1]-fiber[1]*fiberP1[0];
-      
-      //create array for fiber and global coordinate systems
-      Tensor<1, 3> fiberC[3] = {fiber, fiberP1, fiberP2};
-      Tensor<1, 3> globalC[3] = {xaxis, yaxis, zaxis};
-      for (unsigned int i = 0; i < dim; i++){
-        for (unsigned int j = 0; j < dim; j++){
-          R[i][j] = cos(Physics::VectorRelations::angle(fiberC[i], globalC[j]));
-        }
-      }
-
-      /* int angleTest = Physics::VectorRelations::angle(fiber, xaxis);
-      std::cout << angleTest << "\n";
-
-      std::cout << R[0][0] << " " << R[1][0] << " " << R[2][0] << "\n"
-      << R[0][1] << " " << R[1][1] << " " << R[2][1] << "\n"
-      << R[0][2] << " " << R[1][2] << " " << R[2][2] << "\n"; */
-    }
-  Tensor<4, dim> elasticityCartesian;
-  //Rotate elasticity tensor to cartesian global coordinates
-  elasticityCartesian = R*R*elasticity*transpose(R)*transpose(R);
-
-  //read parameters file to determine the dimensions present
-  Parameters::AllParameters params(paramsPath);
-  
-  //iterate through each fluid mesh that was given
-  for(const std::string &meshFluid : simMeshFluid){
-    //This section has to be hard coded, since the creation of the Sim object requires a constant variable input
-    //the value of ‘dims’ is not usable in a constant expression
-    if (params.dimension == 2){
-      Sim<2> sim;
-      sim.loadMesh(simMeshSolid, meshFluid);
-      //sim.setParams(params);
-
-      /*Keeping extrude and refine functions commented out for future reference
-      sim.extrude();
-      for(int i = 1; i <= 2; i++){
-        sim.refine(i);
-      } */ 
-    } else if (params.dimension == 3){
-      Sim<3> sim;
-      sim.loadMesh(simMeshSolid, meshFluid);
-      //sim.setParams(params);
-      
-      /*
-      for(int i = 1; i <= 2; i++){
-        sim.refine(i);
-      }
-      */
-    } else {
-      std::cerr << "Cannot find dimension from parameters file" << std::endl
-                << "Check if " << paramsPath << "exists";
-      return 1;
-    }
-
-    //define path to current file location
-    std::filesystem::path p = std::filesystem::current_path();
-    //create folder with a title corresponding to the current fluid mesh name
-    std::filesystem::create_directory(p / meshFluid);
-
-    //iterate through each file in the main directory
-    for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
-      //checks if each file is a .vtu or .pvd file
-      //since these are main outputs for each test case, want to move them somewhere safe before starting another simulation
-      if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd"){
-        //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
-        std::filesystem::rename(p / dirEntry.path().filename(), p / meshFluid / dirEntry.path().filename());
-      }
-    }
+  //creating array to get fiber coordinates before creating tensor (trying to simulate reading from parameter file)
+  dealii::Tensor<1, dim> fiber;
+  fiber[0] = 1;
+  fiber[1] = 1;
+  //define z axis only for 3D case (otherwise out of bounds)
+  if (dim == 3){
+    fiber[2] = 0;
   }
-}
 
-/*
-Commented out extrude and refine functions because focusing on 2d shape first and refining in gmsh instead of c++ dealii
-//takes input 2d mesh from before and extrudes to a 3d shape, exports shape to .geo file
-template <int dim>
-Triangulation<3> Sim<dim>::extrude(){
-  Triangulation<3> tria3d;  
-  //2d input, number of slices, height, output height, output triangulation
-  GridGenerator::extrude_triangulation(tria2d, 7, 12.0, tria3d);
-  std::ofstream out(meshPath + "vocalFold3d.msh");
-  gridOut.write_msh(tria3d, out);
-  return 0;
-}
+  //TODO: Create new rotation tensor using Euler rotations
+  //create fiber projection in xy and x axis in 2D
+  dealii::Tensor<1, dim> fiberxy({fiber[0], fiber[1]});
+  dealii::Tensor<1, dim> xaxis({1, 0});
+  //find theta angle from x axis
+  double theta = dealii::Physics::VectorRelations::angle(fiberxy, xaxis);
+  //TODO find how to prepopulate R, Rz and Ry from identity tensor using SymmetricTensor::unit_symmetric_tensor() function
+  dealii::Tensor<2, dim> R;
+  dealii::Tensor<2, dim> Rz;
+  for (int i = 0; i < dim; i++){
+    R[i][i] = 1;
+    Rz[i][i] = 1;
+  }
 
-template <int dim>
-int Sim<dim>::refine(int refinement){
-  //refine_global is set to 1 subdivision because mesh is subdivided from previous loop 
-  //one further step into refinement
-  tria.refine_global(1);
-  //output the refined mesh with a different name based on refinement level
-  std::ofstream out(meshPath + "vocalFold3d" + std::to_string(refinement) + ".msh");
-  gridOut.write_msh(tria, out);
-  return 0;
+  //Rotate about z axis, same process for both 2d and 3d 
+  //TODO find way to condense this part?
+  Rz[0][0] = cos(theta);
+  Rz[0][1] = sin(theta);
+  Rz[1][0] = -sin(theta);
+  Rz[1][1] = cos(theta);
+  //defining R initially as identity matrix creates R for both 2d and 3d
+  if(dim == 2){
+    R = Rz;
+  }else if(dim == 3){
+    //if statement for y axis rotation for 3d
+    //find phi angle between xy and full fiber vector
+    //find rotation tensor directly or multiply together? (Could verify both are correct, would be easier to get program to do all the work)
+    double phi = dealii::Physics::VectorRelations::angle(fiber, fiberxy);
+
+    //same issues with Rz, identity tensor and condense assigning sin and cos values
+    dealii::Tensor<2, dim> Ry;
+    for (int i = 0; i < dim; i++){
+      Ry[i][i] = 1;
+    }
+    Ry[0][0] = cos(phi);
+    Ry[0][2] = sin(phi);
+    Ry[2][0] = -sin(phi);
+    Ry[2][2] = cos(phi);
+
+    R=Rz*Ry;
+  }
+  
+  //test edge cases (0 deg, 90, 180, -90 and 45s between)
 }
-*/
