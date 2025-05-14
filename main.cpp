@@ -122,13 +122,15 @@ int Sim<dim>::setParams(Parameters::AllParameters params){
 
 int main(){
   //TODO remove dim when importing to OpenIFEM code
-  const int dim = 2;
+  const int dim = 3;
 
   //Variables and principal matrix creation
-  double E1 = 0, E2 = 0, G12 = 0, mu12 = 0, mu32 = 0;
+  double E1 = 0, E2 = 0, G12 = 0, nu12 = 0, nu23 = 0;
   //TODO import variable values from parameters, hard coding for now
-  E1 = 10;
-  E2 = 1;
+  E1 = 10e6; //MPa
+  E2 = E1; //MPa
+  nu12 = 0.3;
+  nu23 = nu12;
   
   //linear_elastic_material uses symmetric tensor named "elasticity", keeping same for convenience with integration
   SymmetricTensor<4, dim> elasticity;
@@ -137,7 +139,14 @@ int main(){
   TODO create JSON files that map the results of each if statement condition in 4d space, comprised of 1 and 0s (pseudo identity matrix)
   Then just run through each material type, multiply by that mapping matrix and add to elasticity matrix
   */
-  
+  //find k before filling elasticity tensor
+  const double constk = 1-2*(E2*(1+nu23)*pow(nu12,2))/E1-pow(nu23,2);
+  //std::cout << constk << "\n";
+  //defining G12 same as later on in the for loop, isotropic test case rn
+  G12 = (E1*(1-pow(nu23,2))-E2*nu12*(1+nu23))/(2*constk);
+
+  //SymmetricTensor object automatically applies symmetries in ijkl=jikl=ijlk, but still need to manually input ijkl=klij
+  int m=0, n=0;
   for (unsigned int i = 0; i < dim; ++i)
       {
         for (unsigned int j = 0; j < dim; ++j)
@@ -146,59 +155,130 @@ int main(){
               {
                 for (unsigned int l = 0; l < dim; ++l)
                   {
-                    //TODO create if else statement for each case for the equivalent Voigt notation for ij and kl
-                    //S11
+                    //Create temporary indices m, n to write equivalent Voigt notation for ijkl, makes it easier to process and visualize each case
+                    //TODO make another function to convert Einstein to Voigt? (input a, b and output c to avoid duplicate loops for m, n?)
+                    m=0;
+                    n=0;
+
+                    if (i==0 && j==0) {
+                      m=1;
+                    } else if (i==1 && j==1) {
+                      m=2;
+                    } else if (i==2 && j==2) {
+                      m=3;
+                    } else if ((i==1 && j==2)||((i==2 && j==1))) {
+                      m=4;
+                    } else if ((i==0 && j==2)||((i==2 && j==0))) {
+                      m=5;
+                    } else if ((i==0 && j==1)||((i==1 && j==0))) {
+                      m=6;
+                    }
+
+                    if (k==0 && l==0) {
+                      n=1;
+                    } else if (k==1 && l==1) {
+                      n=2;
+                    } else if (k==2 && l==2) {
+                      n=3;
+                    } else if ((k==1 && l==2)||((k==2 && l==1))) {
+                      n=4;
+                    } else if ((k==0 && l==2)||((k==2 && l==0))) {
+                      n=5;
+                    } else if ((k==0 && l==1)||((k==1 && l==0))) {
+                      n=6;
+                    }
+
+                    if(m==1 && n==1)
+                    {
+                      elasticity[i][j][k][l] = E1*(1-pow(nu23,2))/constk;
+                    }
+                    else if((m==2 && n==2)||(m==3 && n==3))
+                    {
+                      elasticity[i][j][k][l] = E2*(1-E2/E1*pow(nu12,2))/constk;
+                    }
+                    else if(m==1 && (n==2 || n==3))
+                    {
+                      elasticity[i][j][k][l] = E2*nu12*(1+nu23)/constk;
+                      //applying symmetry along main diagonal (not automatically done for SymmetricTensor)
+                      elasticity[k][l][i][j] = elasticity[i][j][k][l];
+                    }
+                    else if(m==2 && n==3)
+                    {
+                      elasticity[i][j][k][l] = E2*(E2/E1*pow(nu12,2)+nu23)/constk;
+                      //applying symmetry along main diagonal (not automatically done for SymmetricTensor)
+                      elasticity[k][l][i][j] = elasticity[i][j][k][l];
+                    }
+                    else if(m==4 && n==4)
+                    {
+                      //C11 and C12 are already known based on order of for loops (all of i=1 is done first), but writing explicitly just to be safe
+                      elasticity[i][j][k][l] = (E1*(1-pow(nu23,2))-E2*nu12*(1+nu23))/(2*constk);
+                    }
+                    else if((m==5 && n==5)||(m==6 && n==6))
+                    {
+                      elasticity[i][j][k][l] = G12;
+                    }
+                    /*
+                    //Need to fix case statements here, kinda gave up cause hard to write each combination
+                    //C11
                     if (i==0 && j==0 && k==0 && l==0)
                     {
-                      elasticity[i][j][k][l] = 1/E1;
+                      elasticity[i][j][k][l] = E1*(1-nu23^2)/k;
                     }
-                    //S22, S33
-                    else if ((i==1 && j==1 && k==1 && l==1)||(i==2 && j==2 && k==2 && l==2))
+                    //C22
+                    else if (i==1 && j==1 && k==1 && l==1 || i==2 && j==2 && k==2 && l==2)
                     {
-                      elasticity[i][j][k][l] = 1/E2;
+                      elasticity[i][j][k][l] = E2*(1-E2/E1*nu12^2)/k;
                     }
-                    //S12=S13
-                    else if (((i==0 && j==0) && ((k==1 && l==1)||(k==2 && l==2)))||(((i==1 && j==1)||(i==2 && j==2)) && (k==0 && l==0)))
+                    //C12=C13
+                    else if (i==0 && j==0 && k==l)
                     {
-                      elasticity[i][j][k][l] = -mu12/E1;
+                      elasticity[i][j][k][l] = E2*nu12*(1+nu23)/k;
+                      //applying symmetry along main diagonal (not automatically done for SymmetricTensor)
+                      elasticity[k][l][i][j] = elasticity[i][j][k][l];
                     }
-                    //S23
-                    else if (((i==1 && j==1) && (k==2 && l==2)) || ((i==2 && j==2) && (k==1 && l==1)))
+                    //C23
+                    else if (i==1 %% j==1 && k==2 && l==2)
                     {
-                      elasticity[i][j][k][l] = -mu32/E2;
+                      elasticity[i][j][k][l] = E2*(E2/E1*nu12^2+nu13)/k;
+                      elasticity[k][l][i][j] = elasticity[i][j][k][l];
                     }
-                    //S44
-                    else if (((i==1 && j==2) || (i==2 && j==1)) && ((k==1 && l==2) || (k==2 && l==1)))
+                    //C44
+                    else if (((i==2 && j==3)||(i==3 && j==2))&&)
                     {
-                      elasticity[i][j][k][l] = E2/(2*(1-mu12));
+                      elasticity[i][j][k][l] = (elasticity[2][2][2][2]-elasticity[2][2][3][3])/2;
                     }
-                    //S55=S66
-                    else if (((i==0 && j==2) || (i==2 && j==0)) && ((k==0 && l==2) || (k==2 && l==0))||((i==0 && j==1) || (i==1 && j==0)) && ((k==0 && l==1) || (k==1 && l==0)))
+                    //C55=C66
+                    else if ()
                     {
-                      elasticity[i][j][k][l] = 1/G12;
+                      elasticity[i][j][k][l] = G12;
                     }
+                    */
                   }
               }
           }
       }
-  //creating array to get fiber coordinates before creating tensor (trying to simulate reading from parameter file)
+
+  //creating array to get fiber coordinates before creating tensor
   dealii::Tensor<1, dim> fiber;
   fiber[0] = 1;
   fiber[1] = 1;
   //define z axis only for 3D case (otherwise out of bounds)
   if (dim == 3){
-    fiber[2] = 0;
+    fiber[2] = 1;
   }
+  
+  dealii::Tensor<1, dim> fiberxy;
+  fiberxy[0] = fiber[0];
+  fiberxy[1] = fiber[1];
+  dealii::Tensor<1, dim> xaxis;
+  xaxis[0] = 1;
 
-  //TODO: Create new rotation tensor using Euler rotations
-  //create fiber projection in xy and x axis in 2D
-  dealii::Tensor<1, dim> fiberxy({fiber[0], fiber[1]});
-  dealii::Tensor<1, dim> xaxis({1, 0});
   //find theta angle from x axis
   double theta = dealii::Physics::VectorRelations::angle(fiberxy, xaxis);
   //TODO find how to prepopulate R, Rz and Ry from identity tensor using SymmetricTensor::unit_symmetric_tensor() function
   dealii::Tensor<2, dim> R;
   dealii::Tensor<2, dim> Rz;
+  //temporary identity matrix function
   for (int i = 0; i < dim; i++){
     R[i][i] = 1;
     Rz[i][i] = 1;
@@ -207,17 +287,22 @@ int main(){
   //Rotate about z axis, same process for both 2d and 3d 
   //TODO find way to condense this part?
   Rz[0][0] = cos(theta);
-  Rz[0][1] = sin(theta);
-  Rz[1][0] = -sin(theta);
+  Rz[0][1] = -sin(theta);
+  Rz[1][0] = sin(theta);
   Rz[1][1] = cos(theta);
   //defining R initially as identity matrix creates R for both 2d and 3d
   if(dim == 2){
     R = Rz;
+    //display rotation tensor for debugging
+    /*std::cout << R[0][0] << " " << R[1][0] <<  "\n"
+    << R[0][1] << " " << R[1][1] <<"\n";
+    */
   }else if(dim == 3){
     //if statement for y axis rotation for 3d
     //find phi angle between xy and full fiber vector
-    //find rotation tensor directly or multiply together? (Could verify both are correct, would be easier to get program to do all the work)
+    //TODO finding phi and theta will cause issues for xy projection when fiber is purely in z direction
     double phi = dealii::Physics::VectorRelations::angle(fiber, fiberxy);
+    std::cout << "theta = " << 57.3*theta << "\nphi = " << 57.3*phi << "\n";
 
     //same issues with Rz, identity tensor and condense assigning sin and cos values
     dealii::Tensor<2, dim> Ry;
@@ -225,12 +310,105 @@ int main(){
       Ry[i][i] = 1;
     }
     Ry[0][0] = cos(phi);
-    Ry[0][2] = sin(phi);
-    Ry[2][0] = -sin(phi);
+    Ry[0][2] = -sin(phi);
+    Ry[2][0] = sin(phi);
     Ry[2][2] = cos(phi);
+    
+    //verify correct positioning?
+    //verify with solved rotation tensor form?, eigenvalues?
+    //R=Rz*Ry;
+    
+    R[0][0] = cos(theta)*cos(phi);
+    R[0][1] = -sin(theta);
+    R[0][2] = -cos(theta)*sin(phi);
+    R[1][0] = sin(theta)*cos(phi);
+    R[1][1] = cos(theta);
+    R[1][2] = -sin(theta)*sin(phi);
+    R[2][0] = sin(phi);
+    R[2][1] = 0;
+    R[2][2] = cos(phi);
 
-    R=Rz*Ry;
+    std::cout << R.norm() << "\n\n";
+    std::cout << R[0][0] << " " << R[0][1] << " " << R[0][2] << "\n"
+      << R[1][0] << " " << R[1][1] << " " << R[1][2] << "\n"
+      << R[2][0] << " " << R[2][1] << " " << R[2][2] << "\n";
+    
+
+    //Testing rotation of x axis, which should produce the fiber direction, used for testing
+    //dealii::Tensor<1, dim> ans = R*xaxis;
+
+    //std::cout << ans[0] << "\n" << ans[1] << "\n" << ans[2] << "\n";
   }
-  
-  //test edge cases (0 deg, 90, 180, -90 and 45s between)
+    //Isotropic code pulled from linear_elastic_material.cpp
+    //Pulling same vals of E and nu from anisotropic "isotropic" case
+    double E = E1;
+    double nu = nu12;
+
+    double lambda = E * nu / ((1 + nu) * (1 - 2 * nu));
+    double mu = E / (2 * (1 + nu));
+    dealii::SymmetricTensor<4, dim> elasticityIso;
+    for (unsigned int i = 0; i < dim; ++i)
+      {
+        for (unsigned int j = 0; j < dim; ++j)
+          {
+            for (unsigned int k = 0; k < dim; ++k)
+              {
+                for (unsigned int l = 0; l < dim; ++l)
+                  {
+                    elasticityIso[i][j][k][l] =
+                      (i == k && j == l ? mu : 0.0) +
+                      (i == l && j == k ? mu : 0.0) +
+                      (i == j && k == l ? lambda : 0.0);
+                  }
+              }
+          }
+      }
+
+  Tensor<4, dim> temp;
+  SymmetricTensor<4, dim> elasticityCartesian;
+  //TODO double check multiplication is correct
+  temp = R*R*elasticity*transpose(R)*transpose(R);
+  //for loops required to move generic tensor object to symmetric object for output
+    for (unsigned int i = 0; i < dim; i++){
+      for (unsigned int j = 0; j < dim; j++){
+        for (unsigned int k = 0; k < dim; k++){
+          for (unsigned int l = 0; l < dim; l++){
+            //for cases where ijkl=jikl=ijlk will be overwritten with the last entry, assumes it is already symmetric
+            elasticityCartesian[i][j][k][l] = temp[i][j][k][l];
+          }
+        }
+      }
+    }
+
+  SymmetricTensor<4, dim> elasticityCartesianIso;
+  temp = R*R*elasticityIso*transpose(R)*transpose(R);
+  //for loops required to move generic tensor object to symmetric object for output
+    for (unsigned int i = 0; i < dim; i++){
+      for (unsigned int j = 0; j < dim; j++){
+        for (unsigned int k = 0; k < dim; k++){
+          for (unsigned int l = 0; l < dim; l++){
+            //for cases where ijkl=jikl=ijlk will be overwritten with the last entry, assumes it is already symmetric
+            elasticityCartesianIso[i][j][k][l] = temp[i][j][k][l];
+          }
+        }
+      }
+    }
+    //outputs 11, 22, 33 square of Voigt notation components
+    std::cout << elasticity[0][0][0][0] << "    " << elasticity[0][0][1][1] << "    " << elasticity[0][0][2][2] << "    " << "\n"
+    << elasticity[1][1][0][0] << "    " << elasticity[1][1][1][1] << "    " << elasticity[1][1][2][2] << "    " << "\n"
+    << elasticity[2][2][0][0] << "    " << elasticity[2][2][1][1] << "    " << elasticity[2][2][2][2] << "    " << "\n\n";
+
+    /*std::cout << elasticityIso[0][0][0][0] << "    " << elasticityIso[0][0][1][1] << "    " << elasticityIso[0][0][2][2] << "    " << "\n"
+    << elasticityIso[1][1][0][0] << "    " << elasticityIso[1][1][1][1] << "    " << elasticityIso[1][1][2][2] << "    " << "\n"
+    << elasticityIso[2][2][0][0] << "    " << elasticityIso[2][2][1][1] << "    " << elasticityIso[2][2][2][2] << "    " << "\n\n";
+    */
+
+    std::cout << elasticityCartesian[0][0][0][0] << "    " << elasticityCartesian[0][0][1][1] << "    " << elasticityCartesian[0][0][2][2] << "    " << "\n"
+    << elasticityCartesian[1][1][0][0] << "    " << elasticityCartesian[1][1][1][1] << "    " << elasticityCartesian[1][1][2][2] << "    " << "\n"
+    << elasticityCartesian[2][2][0][0] << "    " << elasticityCartesian[2][2][1][1] << "    " << elasticityCartesian[2][2][2][2] << "    " << "\n\n";
+
+
+    std::cout << elasticityCartesianIso[0][0][0][0] << "    " << elasticityCartesianIso[0][0][1][1] << "    " << elasticityCartesianIso[0][0][2][2] << "    " << "\n"
+    << elasticityCartesianIso[1][1][0][0] << "    " << elasticityCartesianIso[1][1][1][1] << "    " << elasticityCartesianIso[1][1][2][2] << "    " << "\n"
+    << elasticityCartesianIso[2][2][0][0] << "    " << elasticityCartesianIso[2][2][1][1] << "    " << elasticityCartesianIso[2][2][2][2] << "    " << "\n\n";
 }
