@@ -127,9 +127,9 @@ int main(){
   //Variables and principal matrix creation
   double E1 = 0, E2 = 0, G12 = 0, nu12 = 0, nu23 = 0;
   //TODO import variable values from parameters, hard coding for now
-  E1 = 10e6; //MPa
+  E1 = 1e10; //MPa
   E2 = E1; //MPa
-  nu12 = 0.3;
+  nu12 = 0.25;
   nu23 = nu12;
   
   //create elasticity tensor in principal coordinates
@@ -325,15 +325,19 @@ int main(){
     }
   }
   //outputs 1-3 square of Voigt notation components for debugging
-  std::cout << elasticityPrincipal[0][0][0][0] << "    " << elasticityPrincipal[0][0][1][1] << "    " << elasticityPrincipal[0][0][2][2] << "    " << "\n"
+  /*std::cout << elasticityPrincipal[0][0][0][0] << "    " << elasticityPrincipal[0][0][1][1] << "    " << elasticityPrincipal[0][0][2][2] << "    " << "\n"
   << elasticityPrincipal[1][1][0][0] << "    " << elasticityPrincipal[1][1][1][1] << "    " << elasticityPrincipal[1][1][2][2] << "    " << "\n"
   << elasticityPrincipal[2][2][0][0] << "    " << elasticityPrincipal[2][2][1][1] << "    " << elasticityPrincipal[2][2][2][2] << "    " << "\n\n";
+
+  std::cout << elasticityPrincipal[1][2][1][2] << "    " << elasticityPrincipal[1][2][0][2] << "    " << elasticityPrincipal[1][2][0][1] << "    " << "\n"
+  << elasticityPrincipal[0][2][1][2] << "    " << elasticityPrincipal[0][2][0][2] << "    " << elasticityPrincipal[0][2][0][1] << "    " << "\n"
+  << elasticityPrincipal[0][1][1][2] << "    " << elasticityPrincipal[0][1][0][2] << "    " << elasticityPrincipal[0][1][0][1] << "    " << "\n\n";
 
   std::cout << elasticityCartesian[0][0][0][0] << "    " << elasticityCartesian[0][0][1][1] << "    " << elasticityCartesian[0][0][2][2] << "    " << "\n"
   << elasticityCartesian[1][1][0][0] << "    " << elasticityCartesian[1][1][1][1] << "    " << elasticityCartesian[1][1][2][2] << "    " << "\n"
   << elasticityCartesian[2][2][0][0] << "    " << elasticityCartesian[2][2][1][1] << "    " << elasticityCartesian[2][2][2][2] << "    " << "\n\n";
-
-  /*
+  */
+  
   //Using isotropic tensor code for testing matrix creation  
   //Pulling same vals of E and nu from anisotropic "isotropic" case
     double E = E1;
@@ -362,16 +366,35 @@ int main(){
   SymmetricTensor<4, dim> elasticityCartesianIso;
   temp = R*R*elasticityIso*transpose(R)*transpose(R);
   //for loops required to move generic tensor object to symmetric object for output
-    for (unsigned int i = 0; i < dim; i++){
-      for (unsigned int j = 0; j < dim; j++){
-        for (unsigned int k = 0; k < dim; k++){
-          for (unsigned int l = 0; l < dim; l++){
-            //for cases where ijkl=jikl=ijlk will be overwritten with the last entry, assumes it is already symmetric
-            elasticityCartesianIso[i][j][k][l] = temp[i][j][k][l];
-          }
+  for (unsigned int i = 0; i < dim; i++){
+    for (unsigned int j = 0; j < dim; j++){
+      for (unsigned int k = 0; k < dim; k++){
+        for (unsigned int l = 0; l < dim; l++){
+          //for cases where ijkl=jikl=ijlk will be overwritten with the last entry, assumes it is already symmetric
+          elasticityCartesianIso[i][j][k][l] = temp[i][j][k][l];
         }
       }
     }
+  }
+
+  for (unsigned int i = 0; i < dim; i++){
+    for (unsigned int j = 0; j < dim; j++){
+      for (unsigned int k = 0; k < dim; k++){
+        for (unsigned int l = 0; l < dim; l++){
+          std::cout << elasticityPrincipal[i][j][k][l] << "    " << elasticityIso[i][j][k][l] << "\n";
+        }
+      }
+    }
+  }
+
+  /*
+  std::cout << elasticityIso[0][0][0][0] << "    " << elasticityIso[0][0][1][1] << "    " << elasticityIso[0][0][2][2] << "    " << "\n"
+  << elasticityIso[1][1][0][0] << "    " << elasticityIso[1][1][1][1] << "    " << elasticityIso[1][1][2][2] << "    " << "\n"
+  << elasticityIso[2][2][0][0] << "    " << elasticityIso[2][2][1][1] << "    " << elasticityIso[2][2][2][2] << "    " << "\n\n";
+
+  std::cout << elasticityIso[1][2][1][2] << "    " << elasticityIso[1][2][0][2] << "    " << elasticityIso[1][2][0][1] << "    " << "\n"
+  << elasticityIso[0][2][1][2] << "    " << elasticityIso[0][2][0][2] << "    " << elasticityIso[0][2][0][1] << "    " << "\n"
+  << elasticityIso[0][1][1][2] << "    " << elasticityIso[0][1][0][2] << "    " << elasticityIso[0][1][0][1] << "    " << "\n\n";
 
   std::cout << elasticityIso[0][0][0][0] << "    " << elasticityIso[0][0][1][1] << "    " << elasticityIso[0][0][2][2] << "    " << "\n"
   << elasticityIso[1][1][0][0] << "    " << elasticityIso[1][1][1][1] << "    " << elasticityIso[1][1][2][2] << "    " << "\n"
@@ -380,6 +403,6 @@ int main(){
   std::cout << elasticityCartesianIso[0][0][0][0] << "    " << elasticityCartesianIso[0][0][1][1] << "    " << elasticityCartesianIso[0][0][2][2] << "    " << "\n"
   << elasticityCartesianIso[1][1][0][0] << "    " << elasticityCartesianIso[1][1][1][1] << "    " << elasticityCartesianIso[1][1][2][2] << "    " << "\n"
   << elasticityCartesianIso[2][2][0][0] << "    " << elasticityCartesianIso[2][2][1][1] << "    " << elasticityCartesianIso[2][2][2][2] << "    " << "\n\n";
-  */   
+  */
 
 }
