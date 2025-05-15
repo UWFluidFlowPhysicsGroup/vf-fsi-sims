@@ -2615,6 +2615,7 @@ CMakeFiles/main.dir/main.cpp.o: main.cpp \
   /home/nhewko/OpenIFEM-dependencies/dealii-9.4.1/include/deal.II/numerics/data_component_interpretation.h \
   /home/nhewko/OpenIFEM-dependencies/dealii-9.4.1/include/deal.II/grid/grid_in.h \
   /home/nhewko/OpenIFEM-dependencies/dealii-9.4.1/include/deal.II/dofs/dof_tools.h \
+  /home/nhewko/OpenIFEM-dependencies/dealii-9.4.1/include/deal.II/physics/vector_relations.h \
   /home/nhewko/OpenIFEM/OpenIFEM-source/OpenIFEM/include/linear_elasticity.h \
   /home/nhewko/OpenIFEM/OpenIFEM-source/OpenIFEM/include/linear_elastic_material.h \
   /home/nhewko/OpenIFEM/OpenIFEM-source/OpenIFEM/include/material.h \
@@ -2897,6 +2898,8 @@ CMakeFiles/main.dir/main.cpp.o: main.cpp \
 /home/nhewko/OpenIFEM-dependencies/dealii-9.4.1/bundled/umfpack/UMFPACK/Include/umfpack_report_status.h:
 
 /home/nhewko/OpenIFEM/OpenIFEM-source/OpenIFEM/include/linear_elasticity.h:
+
+/home/nhewko/OpenIFEM-dependencies/dealii-9.4.1/include/deal.II/physics/vector_relations.h:
 
 /home/nhewko/OpenIFEM-dependencies/dealii-9.4.1/include/deal.II/dofs/dof_tools.h:
 
