@@ -18,7 +18,7 @@ subsection Simulation
   set Global refinements = 0, 0
 
   # The end time of the simulation in second
-  set End time = 1e0
+  set End time = 2e0
 
   # The time step in second
   set Time step size = 1e-2
@@ -125,7 +125,7 @@ subsection Solid material properties
   # E and nu are only used by linearElasticMaterial
   set Young's modulus = 70e9
 
-  set Poisson's ratio = 0
+  set Poisson's ratio = 0.25
 
   # A list of parameters used by hyperelasticMaterial
   set Hyperelastic parameters = 0.5, 1.67
