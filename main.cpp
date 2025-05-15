@@ -133,7 +133,7 @@ int main(){
   nu23 = nu12;
   
   //create elasticity tensor in principal coordinates
-  SymmetricTensor<4, dim> elasticityPrincipal;
+  dealii::SymmetricTensor<4, dim> elasticityPrincipal;
   
   /*
   TODO create JSON files that map the results of each if statement condition in 4d space, comprised of 1 and 0s (pseudo identity matrix)
@@ -309,7 +309,7 @@ int main(){
     */
   }
   //Create temporary asymmetric tensor for multiplications then converting to symmetric after
-  Tensor<4, dim> temp;
+  dealii::Tensor<4, dim> temp;
   SymmetricTensor<4, dim> elasticityCartesian;
   //TODO double check multiplication is correct
   temp = R*R*elasticityPrincipal*transpose(R)*transpose(R);
