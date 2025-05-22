@@ -122,12 +122,12 @@ int Sim<dim>::setParams(Parameters::AllParameters params){
 
 int main(){
   //TODO remove dim when importing to OpenIFEM code
-  const int dim = 3;
+  const int dim = 2;
 
   //Variables and principal matrix creation
   double E1 = 0, E2 = 0, G12 = 0, nu12 = 0, nu23 = 0;
   //TODO import variable values from parameters, hard coding for now
-  E1 = 1e10; //MPa
+  E1 = 1e9; //MPa
   E2 = E1; //MPa
   nu12 = 0.25;
   nu23 = nu12;
@@ -208,14 +208,16 @@ int main(){
                       //applying symmetry along main diagonal (not automatically done for SymmetricTensor)
                       elasticityPrincipal[k][l][i][j] = elasticityPrincipal[i][j][k][l];
                     }
+                    //
                     else if(m==4 && n==4)
                     {
                       //C11 and C12 are already known based on order of for loops (all of i=1 is done first), but writing explicitly just to be safe
-                      elasticityPrincipal[i][j][k][l] = (E1*(1-pow(nu23,2))-E2*nu12*(1+nu23))/(2*constk);
+                      elasticityPrincipal[i][j][k][l] = 2*(E1*(1-pow(nu23,2))-E2*nu12*(1+nu23))/(2*constk);
                     }
+                    //
                     else if((m==5 && n==5)||(m==6 && n==6))
                     {
-                      elasticityPrincipal[i][j][k][l] = G12;
+                      elasticityPrincipal[i][j][k][l] = 2*G12;
                     }
                   }
               }
@@ -318,14 +320,63 @@ int main(){
     for (unsigned int j = 0; j < dim; j++){
       for (unsigned int k = 0; k < dim; k++){
         for (unsigned int l = 0; l < dim; l++){
+  /*for (int i = dim-1; i > -1; i--){
+    for (int j = dim-1; j > -1; j--){
+      for (int k = dim-1; k > -1; k--){
+        for (int l = dim-1; l > -1; l--){*/
           //for cases where ijkl=jikl=ijlk will be overwritten with the last entry, assumes it is already symmetric
           elasticityCartesian[i][j][k][l] = temp[i][j][k][l];
         }
       }
     }
   }
+  
+  
+  //do in matlab instead? better suited for matrix calcs
+  dealii::Tensor<2, 3> T, VoigtCP, VoigtCG;
+  T[0][0] = pow(cos(theta),2);
+  T[0][1] = pow(sin(theta),2);
+  T[0][2] = 2*cos(theta)*sin(theta);
+  T[1][0] = pow(sin(theta),2);
+  T[1][1] = pow(cos(theta),2);
+  T[1][2] = -2*cos(theta)*sin(theta);
+  T[2][0] = -cos(theta)*sin(theta);
+  T[2][1] = cos(theta)*sin(theta);
+  T[2][2] = pow(cos(theta),2)-pow(sin(theta),2);
+  
+  VoigtCP[0][0] = elasticityPrincipal[0][0][0][0];
+  VoigtCP[0][1] = elasticityPrincipal[0][0][1][1];
+  VoigtCP[1][0] = elasticityPrincipal[1][1][0][0];
+  VoigtCP[1][1] = elasticityPrincipal[1][1][1][1];
+  VoigtCP[2][2] = elasticityPrincipal[0][1][0][1];
+  
+  VoigtCG = invert(T)*VoigtCP*T;
+  //VoigtCG = T*VoigtCP*invert(T);
+  std::cout << VoigtCP[0][0] << "    " << VoigtCP[0][1] << "    " << VoigtCP[0][2] << "    " << "\n"
+  << VoigtCP[1][0] << "    " << VoigtCP[1][1] << "    " << VoigtCP[1][2] << "    " << "\n"
+  << VoigtCP[2][0] << "    " << VoigtCP[2][1] << "    " << VoigtCP[2][2] << "    " << "\n\n";  
+
+  std::cout << VoigtCG[0][0] << "    " << VoigtCG[0][1] << "    " << VoigtCG[0][2] << "    " << "\n"
+  << VoigtCG[1][0] << "    " << VoigtCG[1][1] << "    " << VoigtCG[1][2] << "    " << "\n"
+  << VoigtCG[2][0] << "    " << VoigtCG[2][1] << "    " << VoigtCG[2][2] << "    " << "\n\n";  
+  /*
+  dealii::Tensor<2, dim> RT = transpose(R);
+*/
+/*
+  std::cout << R[0][0] << "    " << R[0][1] << "    " << R[0][2] << "    " << "\n"
+  << R[1][0] << "    " << R[1][1] << "    " << R[1][2] << "    " << "\n"
+  << R[2][0] << "    " << R[2][1] << "    " << R[2][2] << "    " << "\n\n";
+
+  std::cout << RT[0][0] << "    " << RT[0][1] << "    " << RT[0][2] << "    " << "\n"
+  << RT[1][0] << "    " << RT[1][1] << "    " << RT[1][2] << "    " << "\n"
+  << RT[2][0] << "    " << RT[2][1] << "    " << RT[2][2] << "    " << "\n\n";
+*/
+std::cout << elasticityCartesian[0][0][0][0] << "    " << elasticityCartesian[0][0][1][1] << "    " << elasticityCartesian[0][0][0][1] << "    " << "\n"
+  << elasticityCartesian[1][1][0][0] << "    " << elasticityCartesian[1][1][1][1] << "    " << elasticityCartesian[1][1][0][1] << "    " << "\n"
+  << elasticityCartesian[0][1][0][0] << "    " << elasticityCartesian[0][1][1][1] << "    " << elasticityCartesian[0][1][0][1] << "    " << "\n\n";
+
   //outputs 1-3 square of Voigt notation components for debugging
-  /*std::cout << elasticityPrincipal[0][0][0][0] << "    " << elasticityPrincipal[0][0][1][1] << "    " << elasticityPrincipal[0][0][2][2] << "    " << "\n"
+/*std::cout << elasticityPrincipal[0][0][0][0] << "    " << elasticityPrincipal[0][0][1][1] << "    " << elasticityPrincipal[0][0][2][2] << "    " << "\n"
   << elasticityPrincipal[1][1][0][0] << "    " << elasticityPrincipal[1][1][1][1] << "    " << elasticityPrincipal[1][1][2][2] << "    " << "\n"
   << elasticityPrincipal[2][2][0][0] << "    " << elasticityPrincipal[2][2][1][1] << "    " << elasticityPrincipal[2][2][2][2] << "    " << "\n\n";
 
@@ -363,7 +414,7 @@ int main(){
           }
       }
   
-  SymmetricTensor<4, dim> elasticityCartesianIso;
+  /*SymmetricTensor<4, dim> elasticityCartesianIso;
   temp = R*R*elasticityIso*transpose(R)*transpose(R);
   //for loops required to move generic tensor object to symmetric object for output
   for (unsigned int i = 0; i < dim; i++){
@@ -375,17 +426,17 @@ int main(){
         }
       }
     }
-  }
+  }*/
 
-  for (unsigned int i = 0; i < dim; i++){
+  /*for (unsigned int i = 0; i < dim; i++){
     for (unsigned int j = 0; j < dim; j++){
       for (unsigned int k = 0; k < dim; k++){
         for (unsigned int l = 0; l < dim; l++){
-          std::cout << elasticityPrincipal[i][j][k][l] << "    " << elasticityIso[i][j][k][l] << "\n";
+          std::cout << elasticityCartesian[i][j][k][l] << "    " << temp[i][j][k][l] << "\n";
         }
       }
     }
-  }
+  }*/
 
   /*
   std::cout << elasticityIso[0][0][0][0] << "    " << elasticityIso[0][0][1][1] << "    " << elasticityIso[0][0][2][2] << "    " << "\n"
@@ -395,10 +446,6 @@ int main(){
   std::cout << elasticityIso[1][2][1][2] << "    " << elasticityIso[1][2][0][2] << "    " << elasticityIso[1][2][0][1] << "    " << "\n"
   << elasticityIso[0][2][1][2] << "    " << elasticityIso[0][2][0][2] << "    " << elasticityIso[0][2][0][1] << "    " << "\n"
   << elasticityIso[0][1][1][2] << "    " << elasticityIso[0][1][0][2] << "    " << elasticityIso[0][1][0][1] << "    " << "\n\n";
-
-  std::cout << elasticityIso[0][0][0][0] << "    " << elasticityIso[0][0][1][1] << "    " << elasticityIso[0][0][2][2] << "    " << "\n"
-  << elasticityIso[1][1][0][0] << "    " << elasticityIso[1][1][1][1] << "    " << elasticityIso[1][1][2][2] << "    " << "\n"
-  << elasticityIso[2][2][0][0] << "    " << elasticityIso[2][2][1][1] << "    " << elasticityIso[2][2][2][2] << "    " << "\n\n";
 
   std::cout << elasticityCartesianIso[0][0][0][0] << "    " << elasticityCartesianIso[0][0][1][1] << "    " << elasticityCartesianIso[0][0][2][2] << "    " << "\n"
   << elasticityCartesianIso[1][1][0][0] << "    " << elasticityCartesianIso[1][1][1][1] << "    " << elasticityCartesianIso[1][1][2][2] << "    " << "\n"
