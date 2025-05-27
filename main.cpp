@@ -227,7 +227,7 @@ int main(){
   //creating array to get fiber coordinates before creating tensor
   dealii::Tensor<1, dim> fiber;
   fiber[0] = 1;
-  fiber[1] = 2;
+  fiber[1] = 1;
   //define z axis only for 3D case (otherwise out of bounds)
   if (dim == 3){
     fiber[2] = 1;
@@ -508,7 +508,7 @@ std::cout << elasticityCartesian[0][0][0][0] << "    " << elasticityCartesian[0]
     for (unsigned int j = 0; j < dim; j++){
       for (unsigned int k = 0; k < dim; k++){
         for (unsigned int l = 0; l < dim; l++){
-          std::cout << (int)elasticityIso[i][j][k][l] << "    " << (int)elasticityPrincipal[i][j][k][l] << "    " << (int)temp[i][j][k][l] << "\n";
+          std::cout << elasticityIso[i][j][k][l] << "    " << elasticityPrincipal[i][j][k][l] << "    " << (int)temp[i][j][k][l] << "\n";
         }
       }
     }
