@@ -122,7 +122,7 @@ int Sim<dim>::setParams(Parameters::AllParameters params){
 
 int main(){
   //TODO remove dim when importing to OpenIFEM code
-  const int dim = 2;
+  const int dim = 3;
 
   //Variables and principal matrix creation
   double E1 = 0, E2 = 0, G12 = 0, nu12 = 0, nu23 = 0;
@@ -212,12 +212,12 @@ int main(){
                     else if(m==4 && n==4)
                     {
                       //C11 and C12 are already known based on order of for loops (all of i=1 is done first), but writing explicitly just to be safe
-                      elasticityPrincipal[i][j][k][l] = 2*(E1*(1-pow(nu23,2))-E2*nu12*(1+nu23))/(2*constk);
+                      elasticityPrincipal[i][j][k][l] = (E1*(1-pow(nu23,2))-E2*nu12*(1+nu23))/(2*constk);
                     }
                     //
                     else if((m==5 && n==5)||(m==6 && n==6))
                     {
-                      elasticityPrincipal[i][j][k][l] = 2*G12;
+                      elasticityPrincipal[i][j][k][l] = G12;
                     }
                   }
               }
@@ -227,7 +227,7 @@ int main(){
   //creating array to get fiber coordinates before creating tensor
   dealii::Tensor<1, dim> fiber;
   fiber[0] = 1;
-  fiber[1] = 1;
+  fiber[1] = 2;
   //define z axis only for 3D case (otherwise out of bounds)
   if (dim == 3){
     fiber[2] = 1;
@@ -248,6 +248,9 @@ int main(){
   //Prepopulating not really necessary, defaults to 0 value, so identity only ensures the "1" along main diagonal is filled for 3d
   dealii::Tensor<2, dim> R;
   dealii::Tensor<2, dim> Rz;
+
+  std::cout << std::scientific << std::setprecision(3);
+  
   //temporary identity matrix function
   for (int i = 0; i < dim; i++){
     R[i][i] = 1;
@@ -266,9 +269,9 @@ int main(){
     //2d case can be rotated about the z axis, since the whole simulation is within the xy plane
     R = Rz;
     //display rotation tensor for debugging
-    /*std::cout << R[0][0] << " " << R[1][0] <<  "\n"
-    << R[0][1] << " " << R[1][1] <<"\n";
-    */
+    std::cout << R[0][0] << " " << R[1][0] <<  "\n"
+    << R[0][1] << " " << R[1][1] <<"\n\n";
+    
   }else if(dim == 3){
     //3d case needs phi to account for components in the z direction, which is found using xy projection and full fiber direction
     //TODO finding phi and theta will cause issues for xy projection when fiber is purely in z direction
@@ -311,19 +314,85 @@ int main(){
     */
   }
   //Create temporary asymmetric tensor for multiplications then converting to symmetric after
-  dealii::Tensor<4, dim> temp;
+  dealii::Tensor<4, dim> temp, temp2;
   SymmetricTensor<4, dim> elasticityCartesian;
   //TODO double check multiplication is correct
-  temp = R*R*elasticityPrincipal*transpose(R)*transpose(R);
+  //https://stackoverflow.com/questions/50178156/efficient-tensor-multiplication
+  //temp = R*R*elasticityPrincipal*transpose(R)*transpose(R);
+
+  temp = R*elasticityPrincipal;
+  //shuffle j to front
+  for (unsigned int i = 0; i < dim; i++){
+    for (unsigned int j = 0; j < dim; j++){
+      for (unsigned int k = 0; k < dim; k++){
+        for (unsigned int l = 0; l < dim; l++){
+          temp2[j][i][k][l] = temp[i][j][k][l];
+        }
+      }
+    }
+  }
+  temp2 = R*temp2;
+  //move j back to prepare for next
+  for (unsigned int i = 0; i < dim; i++){
+    for (unsigned int j = 0; j < dim; j++){
+      for (unsigned int k = 0; k < dim; k++){
+        for (unsigned int l = 0; l < dim; l++){
+          temp[i][j][k][l] = temp2[j][i][k][l];
+        }
+      }
+    }
+  }
+
+  //shuffle k to front
+  for (unsigned int i = 0; i < dim; i++){
+    for (unsigned int j = 0; j < dim; j++){
+      for (unsigned int k = 0; k < dim; k++){
+        for (unsigned int l = 0; l < dim; l++){
+          temp2[k][i][j][l] = temp[i][j][k][l];
+        }
+      }
+    }
+  }
+  temp2 = R*temp2;
+  //move k back to prepare for next
+  for (unsigned int i = 0; i < dim; i++){
+    for (unsigned int j = 0; j < dim; j++){
+      for (unsigned int k = 0; k < dim; k++){
+        for (unsigned int l = 0; l < dim; l++){
+          temp[i][j][k][l] = temp2[k][i][j][l];
+        }
+      }
+    }
+  }
+
+  //shuffle l to front
+  for (unsigned int i = 0; i < dim; i++){
+    for (unsigned int j = 0; j < dim; j++){
+      for (unsigned int k = 0; k < dim; k++){
+        for (unsigned int l = 0; l < dim; l++){
+          temp2[l][i][j][k] = temp[i][j][k][l];
+        }
+      }
+    }
+  }
+  temp2 = R*temp2;
+  //move l back for final rotation
+  for (unsigned int i = 0; i < dim; i++){
+    for (unsigned int j = 0; j < dim; j++){
+      for (unsigned int k = 0; k < dim; k++){
+        for (unsigned int l = 0; l < dim; l++){
+          temp[i][j][k][l] = temp2[l][i][j][k];
+        }
+      }
+    }
+  }
+
+
   //for loops required to move generic tensor object to symmetric object for output
   for (unsigned int i = 0; i < dim; i++){
     for (unsigned int j = 0; j < dim; j++){
       for (unsigned int k = 0; k < dim; k++){
         for (unsigned int l = 0; l < dim; l++){
-  /*for (int i = dim-1; i > -1; i--){
-    for (int j = dim-1; j > -1; j--){
-      for (int k = dim-1; k > -1; k--){
-        for (int l = dim-1; l > -1; l--){*/
           //for cases where ijkl=jikl=ijlk will be overwritten with the last entry, assumes it is already symmetric
           elasticityCartesian[i][j][k][l] = temp[i][j][k][l];
         }
@@ -331,7 +400,7 @@ int main(){
     }
   }
   
-  
+  /*
   //do in matlab instead? better suited for matrix calcs
   dealii::Tensor<2, 3> T, VoigtCP, VoigtCG;
   T[0][0] = pow(cos(theta),2);
@@ -358,7 +427,7 @@ int main(){
 
   std::cout << VoigtCG[0][0] << "    " << VoigtCG[0][1] << "    " << VoigtCG[0][2] << "    " << "\n"
   << VoigtCG[1][0] << "    " << VoigtCG[1][1] << "    " << VoigtCG[1][2] << "    " << "\n"
-  << VoigtCG[2][0] << "    " << VoigtCG[2][1] << "    " << VoigtCG[2][2] << "    " << "\n\n";  
+  << VoigtCG[2][0] << "    " << VoigtCG[2][1] << "    " << VoigtCG[2][2] << "    " << "\n\n";  */
   /*
   dealii::Tensor<2, dim> RT = transpose(R);
 */
@@ -371,9 +440,16 @@ int main(){
   << RT[1][0] << "    " << RT[1][1] << "    " << RT[1][2] << "    " << "\n"
   << RT[2][0] << "    " << RT[2][1] << "    " << RT[2][2] << "    " << "\n\n";
 */
+
+/*std::cout << elasticityPrincipal[0][0][0][0] << "    " << elasticityPrincipal[0][0][1][1] << "    " << elasticityPrincipal[0][0][0][1] << "    " << "\n"
+  << elasticityPrincipal[1][1][0][0] << "    " << elasticityPrincipal[1][1][1][1] << "    " << elasticityPrincipal[1][1][0][1] << "    " << "\n"
+  << elasticityPrincipal[0][1][0][0] << "    " << elasticityPrincipal[0][1][1][1] << "    " << elasticityPrincipal[0][1][0][1] << "    " << "\n\n";
+
 std::cout << elasticityCartesian[0][0][0][0] << "    " << elasticityCartesian[0][0][1][1] << "    " << elasticityCartesian[0][0][0][1] << "    " << "\n"
   << elasticityCartesian[1][1][0][0] << "    " << elasticityCartesian[1][1][1][1] << "    " << elasticityCartesian[1][1][0][1] << "    " << "\n"
   << elasticityCartesian[0][1][0][0] << "    " << elasticityCartesian[0][1][1][1] << "    " << elasticityCartesian[0][1][0][1] << "    " << "\n\n";
+*/
+
 
   //outputs 1-3 square of Voigt notation components for debugging
 /*std::cout << elasticityPrincipal[0][0][0][0] << "    " << elasticityPrincipal[0][0][1][1] << "    " << elasticityPrincipal[0][0][2][2] << "    " << "\n"
@@ -428,15 +504,15 @@ std::cout << elasticityCartesian[0][0][0][0] << "    " << elasticityCartesian[0]
     }
   }*/
 
-  /*for (unsigned int i = 0; i < dim; i++){
+  for (unsigned int i = 0; i < dim; i++){
     for (unsigned int j = 0; j < dim; j++){
       for (unsigned int k = 0; k < dim; k++){
         for (unsigned int l = 0; l < dim; l++){
-          std::cout << elasticityCartesian[i][j][k][l] << "    " << temp[i][j][k][l] << "\n";
+          std::cout << (int)elasticityIso[i][j][k][l] << "    " << (int)elasticityPrincipal[i][j][k][l] << "    " << (int)temp[i][j][k][l] << "\n";
         }
       }
     }
-  }*/
+  }
 
   /*
   std::cout << elasticityIso[0][0][0][0] << "    " << elasticityIso[0][0][1][1] << "    " << elasticityIso[0][0][2][2] << "    " << "\n"
