@@ -169,8 +169,8 @@ int main(){
     //2d case can be rotated about the z axis, since the whole simulation is within the xy plane
     R = Rz;
     //display rotation tensor for debugging
-    std::cout << R[0][0] << " " << R[1][0] <<  "\n"
-    << R[0][1] << " " << R[1][1] <<"\n\n";
+    /*std::cout << R[0][0] << " " << R[1][0] <<  "\n"
+    << R[0][1] << " " << R[1][1] <<"\n\n";*/
     
   }else if(dim == 3){
     //3d case needs phi to account for components in the z direction, which is found using xy projection and full fiber direction
@@ -189,21 +189,8 @@ int main(){
     Ry[2][2] = cos(phi);
     
     R=Rz*Ry;
-    
-    /*
-    Trying out explicit rotation tensor solution
-    R[0][0] = cos(theta)*cos(phi);
-    R[0][1] = -sin(theta);
-    R[0][2] = -cos(theta)*sin(phi);
-    R[1][0] = sin(theta)*cos(phi);
-    R[1][1] = cos(theta);
-    R[1][2] = -sin(theta)*sin(phi);
-    R[2][0] = sin(phi);
-    R[2][1] = 0;
-    R[2][2] = cos(phi);
 
-    std::cout << R.norm() << "\n\n";
-    std::cout << R[0][0] << " " << R[0][1] << " " << R[0][2] << "\n"
+    /*std::cout << R[0][0] << " " << R[0][1] << " " << R[0][2] << "\n"
       << R[1][0] << " " << R[1][1] << " " << R[1][2] << "\n"
       << R[2][0] << " " << R[2][1] << " " << R[2][2] << "\n";
     */
@@ -369,5 +356,6 @@ int main(){
       }
     }
   }
+  std::cout << "Written to file " << filename << "successfully";
     
 }
