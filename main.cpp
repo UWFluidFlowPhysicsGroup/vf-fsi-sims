@@ -29,10 +29,11 @@ int main(){
   //Variables and principal matrix creation
   double E1 = 0, E2 = 0, G12 = 0, nu12 = 0, nu23 = 0;
   //TODO import variable values from parameters, hard coding for now
-  E1 = 1e9; //MPa
-  E2 = E1; //MPa
-  nu12 = 0.25;
+  E1 = 131e9; //MPa
+  E2 = 10.3e9; //MPa
+  nu12 = 0.22;
   nu23 = nu12;
+  G12 = 6.9e9;
   
   //create elasticity tensor in principal coordinates
   dealii::SymmetricTensor<4, dim> elasticityPrincipal;
@@ -45,7 +46,7 @@ int main(){
   const double constk = 1-2*(E2*(1+nu23)*pow(nu12,2))/E1-pow(nu23,2);
 
   //defining G12 same as later on in the for loop, isotropic test case rn
-  G12 = (E1*(1-pow(nu23,2))-E2*nu12*(1+nu23))/(2*constk);
+  //  G12 = (E1*(1-pow(nu23,2))-E2*nu12*(1+nu23))/(2*constk);
 
   //SymmetricTensor object automatically applies symmetries in ijkl=jikl=ijlk, but still need to manually input ijkl=klij symmetry
   int m=0, n=0;
@@ -132,7 +133,7 @@ int main(){
   fiber[1] = 2;
   //define z axis only for 3D case (otherwise out of bounds)
   if (dim == 3){
-    fiber[2] = 3;
+    fiber[2] = 0;
   }
   
   //Create projection of fiber onto xy plane to find angles
@@ -351,7 +352,8 @@ int main(){
       for (unsigned int k = 0; k < dim; k++){
         for (unsigned int l = 0; l < dim; l++){
           //std::cout << elasticityIso[i][j][k][l] << "    " << elasticityPrincipal[i][j][k][l] << "    " << (int)temp[i][j][k][l] << "\n";
-          file << elasticityPrincipal[i][j][k][l] << "," << (int)temp[i][j][k][l] << "," << (int)elasticityCartesian[i][j][k][l] << "\n";
+          //file << elasticityPrincipal[i][j][k][l] << "," << (long)temp[i][j][k][l] << "," << (long)elasticityCartesian[i][j][k][l] << "\n";
+          file << elasticityPrincipal[i][j][k][l] << "," << temp[i][j][k][l] << "," << elasticityCartesian[i][j][k][l] << "\n";
         }
       }
     }
