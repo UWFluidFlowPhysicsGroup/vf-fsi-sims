@@ -9,13 +9,18 @@
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_tools.h>
 
+//import dealII libraries for parallel computing
+#include <deal.II/distributed/grid_refinement.h>
+#include <deal.II/distributed/solution_transfer.h>
+#include <deal.II/distributed/tria.h>
+
 //import OpenIFEM libraries
 //solid linear elastic solver
-#include "linear_elasticity.h"
+#include "mpi_shared_linear_elasticity.h"
 //fluid incompressible navier stokes solver
-#include "insim.h"
+#include "mpi_insim.h"
 //fluid-solid interface solver
-#include "fsi.h"
+#include "mpi_fsi.h"
 #include "parameters.h"
 #include "utilities.h"
 
@@ -28,14 +33,14 @@
 #include <filesystem>
 
 //create solid objects
-extern template class Solid::LinearElasticity<2>;
-extern template class Solid::LinearElasticity<3>;
+extern template class Solid::MPI::SharedLinearElasticity<2>;
+extern template class Solid::MPI::SharedLinearElasticity<3>;
 //create fluid objects
-extern template class Fluid::InsIM<2>;
-extern template class Fluid::InsIM<3>;
+extern template class Fluid::MPI::InsIM<2>;
+extern template class Fluid::MPI::InsIM<3>;
 //fluid-solid interface objects
-extern template class FSI<2>;
-extern template class FSI<3>;
+extern template class MPI::FSI<2>;
+extern template class MPI::FSI<3>;
 
 using namespace dealii;
 
@@ -55,7 +60,7 @@ class Sim{
     // Fluid::InsIM<dim> fluid(Triangulation<dim> triaFluid, Parameters::AllParameters params);
 
   private:
-    Triangulation<dim> triaSolid, triaFluid;
+    parallel::distributed::Triangulation<dim> triaSolid, triaFluid;
     DoFHandler<dim> dof_handler;
     GridIn<dim> gridIn;
 
@@ -131,16 +136,16 @@ void Sim<dim>::setParams(Parameters::AllParameters params){
   //Fluid::InsIM<dim> fluid(triaFluid, params);
   
   if (params.simulation_type == "Solid"){
-    Solid::LinearElasticity<dim> solid(triaSolid, params);
+    Solid::MPI::SharedLinearElasticity<dim> solid(triaSolid, params);
     solid.run();
   }else if(params.simulation_type == "Fluid"){
-    Fluid::InsIM<dim> fluid(triaFluid, params);
+    Fluid::MPI::InsIM<dim> fluid(triaFluid, params);
     fluid.run();
   }else if(params.simulation_type == "FSI"){
     //combine solid and fluid meshes to make FSI simulation
-    Solid::LinearElasticity<dim> solid(triaSolid, params);
-    Fluid::InsIM<dim> fluid(triaFluid, params);
-    FSI<dim> fsi(fluid, solid, params, true);
+    Solid::MPI::SharedLinearElasticity<dim> solid(triaSolid, params);
+    Fluid::MPI::InsIM<dim> fluid(triaFluid, params);
+    MPI::FSI<dim> fsi(fluid, solid, params, true);
     fsi.run();
   }else{
     //error occured

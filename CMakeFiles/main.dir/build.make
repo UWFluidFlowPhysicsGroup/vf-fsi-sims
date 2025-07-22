@@ -105,22 +105,21 @@ main: /home/nhewko/OpenIFEM-dependencies/petsc-3.16.6/x86_64/lib/libzmumps.a
 main: /home/nhewko/OpenIFEM-dependencies/petsc-3.16.6/x86_64/lib/libmumps_common.a
 main: /home/nhewko/OpenIFEM-dependencies/petsc-3.16.6/x86_64/lib/libpord.a
 main: /home/nhewko/OpenIFEM-dependencies/petsc-3.16.6/x86_64/lib/libscalapack.a
-main: /usr/lib/x86_64-linux-gnu/libmpi.so
-main: /home/nhewko/local/lib/libp4est.so
-main: /home/nhewko/local/lib/libsc.so
-main: /usr/lib/x86_64-linux-gnu/libscalapack-openmpi.so
-main: /usr/lib/x86_64-linux-gnu/liblapack.so
-main: /usr/lib/x86_64-linux-gnu/libblas.so
 main: /usr/lib/x86_64-linux-gnu/libmpi_usempif08.so
 main: /usr/lib/x86_64-linux-gnu/libmpi_usempi_ignore_tkr.so
 main: /usr/lib/x86_64-linux-gnu/libmpi_mpifh.so
-main: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
+main: /usr/lib/x86_64-linux-gnu/libmpi.so
 main: /usr/lib/x86_64-linux-gnu/libopen-rte.so
 main: /usr/lib/x86_64-linux-gnu/libopen-pal.so
 main: /usr/lib/x86_64-linux-gnu/libhwloc.so
 main: /usr/lib/x86_64-linux-gnu/libevent_core.so
 main: /usr/lib/x86_64-linux-gnu/libevent_pthreads.so
 main: /usr/lib/x86_64-linux-gnu/libz.so
+main: /root/local/lib/libp4est.so
+main: /root/local/lib/libsc.so
+main: /usr/lib/x86_64-linux-gnu/liblapack.so
+main: /usr/lib/x86_64-linux-gnu/libblas.so
+main: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
 main: CMakeFiles/main.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/nhewko/VocalFolds/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/main.dir/link.txt --verbose=$(VERBOSE)
