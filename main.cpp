@@ -91,8 +91,10 @@ extern template class Solid::MPI::SharedLinearElasticity<3>;
 // extern template class Solid::MPI::SharedHyperElasticity<3>;
 
 //create fluid objects
-extern template class Fluid::MPI::InsIM<2>;
-extern template class Fluid::MPI::InsIM<3>;
+// extern template class Fluid::MPI::InsIM<2>;
+// extern template class Fluid::MPI::InsIM<3>;
+extern template class Fluid::MPI::SCnsIM<2>;
+extern template class Fluid::MPI::SCnsIM<3>;
 // extern template class Fluid::MPI::SCnsIM<2>;
 // extern template class Fluid::MPI::InsIMEX<3>;
 
@@ -102,15 +104,16 @@ extern template class MPI::FSI<3>;
 
 using namespace dealii;
 
-int main(){
+int main(int argc, char *argv[]){
+  const std::string simMeshSolid[] = {"VocalFoldSolid3DFSI"};
+  //Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
+  const std::string simMeshFluid[] = {"VF_Fluid_3D_FSI"};
+  const std::string meshPath = "meshes/";
+  const std::string paramsPath = "parameters.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
-  const std::string simMeshSolid[] = {""};
-  //Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
-  const std::string simMeshFluid[] = {""};
-  const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters.prm";
+  Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
 
   //iterate through each fluid mesh that was given
   for(const std::string &meshFluid : simMeshFluid){
@@ -119,7 +122,9 @@ int main(){
       //This section has to be hard coded, since the creation of the Sim object requires a constant variable input
       //the value of ‘dims’ is not usable in a constant expression
       if (params.dimension == 2){
-        parallel::distributed::Triangulation<2> triaSolid, triaFluid;
+        //solid is still regular triangulation object, not distributed
+        Triangulation<2> triaSolid;
+        parallel::distributed::Triangulation<2> triaFluid(MPI_COMM_WORLD);
         DoFHandler<2> dof_handler;
         GridIn<2> gridIn;
 
@@ -134,7 +139,6 @@ int main(){
             //exit the program
             exit(0);
           }
-
           //define GridIn object to receive 2d mesh
           gridIn.attach_triangulation(triaSolid);
           //imports mesh from selected area
@@ -151,7 +155,6 @@ int main(){
                       << "----------------------------------------------------" << "\n";
             exit(0);
           }
-
           //define GridIn object to receive fluid mesh
           gridIn.attach_triangulation(triaFluid);
           //imports the fluid mesh from the valid file path
@@ -163,12 +166,12 @@ int main(){
             Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
             solid.run();
           }else if(params.simulation_type == "Fluid"){
-            Fluid::MPI::InsIM<2> fluid(triaFluid, params);
+            Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
             fluid.run();
           }else if(params.simulation_type == "FSI"){
             //combine solid and fluid meshes to make FSI simulation
             Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
-            Fluid::MPI::InsIM<2> fluid(triaFluid, params);
+            Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
             MPI::FSI<2> fsi(fluid, solid, params, true);
             fsi.run();
           }else{
@@ -177,7 +180,8 @@ int main(){
           }
 
       } else if (params.dimension == 3){
-        parallel::distributed::Triangulation<3> triaSolid, triaFluid;
+        Triangulation<3> triaSolid;
+        parallel::distributed::Triangulation<3> triaFluid(MPI_COMM_WORLD);
         DoFHandler<3> dof_handler;
         GridIn<3> gridIn;
 
@@ -192,13 +196,11 @@ int main(){
             //exit the program
             exit(0);
           }
-
           //define GridIn object to receive 2d mesh
           gridIn.attach_triangulation(triaSolid);
           //imports mesh from selected area
           gridIn.read_msh(solidPath);
         }
-
         if (params.simulation_type == "Fluid" || params.simulation_type == "FSI"){
           // Dynamically define path for fluid mesh location
           std::ifstream fluidPath(meshPath + meshFluid + ".msh");
@@ -209,7 +211,6 @@ int main(){
                       << "----------------------------------------------------" << "\n";
             exit(0);
           }
-
           //define GridIn object to receive fluid mesh
           gridIn.attach_triangulation(triaFluid);
           //imports the fluid mesh from the valid file path
@@ -221,12 +222,12 @@ int main(){
             Solid::MPI::SharedLinearElasticity<3> solid(triaSolid, params);
             solid.run();
           }else if(params.simulation_type == "Fluid"){
-            Fluid::MPI::InsIM<3> fluid(triaFluid, params);
+            Fluid::MPI::SCnsIM<3> fluid(triaFluid, params);
             fluid.run();
           }else if(params.simulation_type == "FSI"){
             //combine solid and fluid meshes to make FSI simulation
             Solid::MPI::SharedLinearElasticity<3> solid(triaSolid, params);
-            Fluid::MPI::InsIM<3> fluid(triaFluid, params);
+            Fluid::MPI::SCnsIM<3> fluid(triaFluid, params);
             MPI::FSI<3> fsi(fluid, solid, params, true);
             fsi.run();
           }else{
@@ -275,7 +276,7 @@ int main(){
 
 
 
-//Vars in unnamed namespace to avoid reading from other files
+// //Vars in unnamed namespace to avoid reading from other files
 // template <int dim>
 // class Sim{
 //   public:
@@ -291,17 +292,18 @@ int main(){
 //     // Fluid::InsIM<dim> fluid(Triangulation<dim> triaFluid, Parameters::AllParameters params);
 
 //   private:
-//     parallel::distributed::Triangulation<dim> triaSolid, triaFluid;
-//     Triangulation<dim> tria;
+//     //how to create triaFluid with MPI_COMM_WORLD as argument for each instance?
+//     parallel::distributed::Triangulation<dim> triaFluid(MPI_COMM_WORLD);
+//     Triangulation<dim> triaSolid;
 //     DoFHandler<dim> dof_handler;
 //     GridIn<dim> gridIn;
 
 // };
 
 // namespace {
-// const std::string simMeshSolid[] = {""};
+// const std::string simMeshSolid[] = {"VocalFoldSolid3DFSI"};
 // //Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
-// const std::string simMeshFluid[] = {""};
+// const std::string simMeshFluid[] = {"VF_Fluid_3D_FSI"};
 // const std::string meshPath = "meshes/";
 // const std::string paramsPath = "parameters.prm";
 // GridOut gridOut;

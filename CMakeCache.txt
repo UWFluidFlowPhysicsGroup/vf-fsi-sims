@@ -380,9 +380,6 @@ MPI_open-rte_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libopen-rte.so
 //Location of the z library for MPI
 MPI_z_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libz.so
 
-//The directory containing a CMake configuration file for P4EST.
-P4EST_DIR:PATH=P4EST_DIR-NOTFOUND
-
 //Path to a program.
 PERL_EXECUTABLE:FILEPATH=/usr/bin/perl
 
