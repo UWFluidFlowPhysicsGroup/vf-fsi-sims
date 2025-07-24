@@ -120,7 +120,6 @@ main: /root/local/lib/libp4est.so
 main: /root/local/lib/libsc.so
 main: /usr/lib/x86_64-linux-gnu/liblapack.so
 main: /usr/lib/x86_64-linux-gnu/libblas.so
-main: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so
 main: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
 main: CMakeFiles/main.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/nhewko/VocalFolds/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable main"
