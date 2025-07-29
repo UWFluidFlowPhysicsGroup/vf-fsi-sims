@@ -30,8 +30,10 @@
 //   return 0;
 // }
 
-//Build command to set up libraries:
-//sudo make main -I $HOME/p4est_build/local/include -L $HOME/p4est_build/local/lib -lp4est -lsc -lz -lm
+// Build commands to set up libraries, need to export p4est library path each time Ubuntu is launched:
+// export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/p4est_build/local/lib
+// sudo make main -I $HOME/p4est_build/local/include -L $HOME/p4est_build/local/lib -lp4est -lsc -lz -lm
+
 //import dealII libraries
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/tria_accessor.h>
@@ -105,9 +107,9 @@ extern template class MPI::FSI<3>;
 using namespace dealii;
 
 int main(int argc, char *argv[]){
-  const std::string simMeshSolid[] = {"VocalFoldSolid3DFSI"};
+  const std::string simMeshSolid[] = {"FSIChannelSolid_3D"};
   //Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
-  const std::string simMeshFluid[] = {"VF_Fluid_3D_FSI"};
+  const std::string simMeshFluid[] = {"FSIChannelFluid_3D"};
   const std::string meshPath = "meshes/";
   const std::string paramsPath = "parameters.prm";
   //read parameters file to determine the dimensions present
