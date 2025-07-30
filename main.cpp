@@ -1,38 +1,20 @@
-// // Base hello world template taken from:
-// // https://education.molssi.org/parallel-programming/04-distributed-examples.html
-
-// #include <iostream>
-// #include <mpi.h>
-// #include <deal.II/base/mpi.h>
-
-// using namespace dealii;
-
-// const double L = 4, H = 1, a = 0.1, b = 0.4, h = 0.05, U = 1.5;
-
-// int main(int argc, char **argv) {
-//   // Using anything related to dealii requires libp4est.so.3, which causes the missing library error
-//   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-//   // std::string infile("parameters.prm");
-//   //     if (argc > 1)
-//   //       {
-//   //         infile = argv[1];
-//   //       }
-//   // Parameters::AllParameters params(infile);
-//   // std::cout << "test";
-
-//   //   // Initialize MPI
-//   //   // This must always be called before any other MPI functions
-//   //   MPI_Init(&argc, &argv);
-//   // // Finalize MPI
-//   // // This must always be called after all other MPI functions
-//   // MPI_Finalize();
-
-//   return 0;
-// }
-
 // Build commands to set up libraries, need to export p4est library path each time Ubuntu is launched:
+// not needed if added to .bashrc file in home directory
 // export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/p4est_build/local/lib
+
+// modified CMakeLists to not need -I and -L commands anymore, still need -l commands
 // sudo make main -I $HOME/p4est_build/local/include -L $HOME/p4est_build/local/lib -lp4est -lsc -lz -lm
+// mpiexec -n 4 main
+
+// Replace 4 with number of cores you wish to run
+
+//https://education.molssi.org/parallel-programming/04-distributed-examples.html
+//https://stackoverflow.com/questions/23163075/how-to-compile-an-mpi-included-c-program-using-cmake
+//https://hpc-discourse.usc.edu/t/use-cmake-in-an-mpi-c-program/507/4
+//https://stackoverflow.com/questions/11368215/loading-shared-library-in-open-mpi-mpi-run
+
+//https://p4est.github.io/api/p4est-latest/installing_p4est.html
+//https://education.molssi.org/parallel-programming/04-distributed-examples.html
 
 //import dealII libraries
 #include <deal.II/grid/tria.h>
@@ -50,29 +32,14 @@
 #include <deal.II/distributed/solution_transfer.h>
 #include <deal.II/distributed/tria.h>
 
-// missing p4est library caused by trying to run mpirun directly, should run it through CMake
-//https://stackoverflow.com/questions/23163075/how-to-compile-an-mpi-included-c-program-using-cmake
-//https://hpc-discourse.usc.edu/t/use-cmake-in-an-mpi-c-program/507/4
-//https://stackoverflow.com/questions/11368215/loading-shared-library-in-open-mpi-mpi-run
-
-//https://p4est.github.io/api/p4est-latest/installing_p4est.html
-//https://education.molssi.org/parallel-programming/04-distributed-examples.html
 #include <mpi.h>
 #include <deal.II/base/mpi.h>
-/**
- * 2D leaflet case with serial incompressible fluid solver and hyperelastic
- * solver.
- */
-#include "mpi_fsi.h"
-#include "mpi_insimex.h"
-#include "mpi_scnsim.h"
-#include "mpi_shared_hyper_elasticity.h"
 
 //import OpenIFEM libraries
 //solid linear elastic solver
 #include "mpi_shared_linear_elasticity.h"
-//fluid incompressible navier stokes solver
-#include "mpi_insim.h"
+//fluid slightly compressible navier stokes solver, used cause it seems more stable for simulations?
+#include "mpi_scnsim.h"
 //fluid-solid interface solver
 #include "mpi_fsi.h"
 #include "parameters.h"
@@ -89,16 +56,10 @@
 //create solid objects
 extern template class Solid::MPI::SharedLinearElasticity<2>;
 extern template class Solid::MPI::SharedLinearElasticity<3>;
-// extern template class Solid::MPI::SharedHyperElasticity<2>;
-// extern template class Solid::MPI::SharedHyperElasticity<3>;
 
 //create fluid objects
-// extern template class Fluid::MPI::InsIM<2>;
-// extern template class Fluid::MPI::InsIM<3>;
 extern template class Fluid::MPI::SCnsIM<2>;
 extern template class Fluid::MPI::SCnsIM<3>;
-// extern template class Fluid::MPI::SCnsIM<2>;
-// extern template class Fluid::MPI::InsIMEX<3>;
 
 //fluid-solid interface objects
 extern template class MPI::FSI<2>;
@@ -107,8 +68,8 @@ extern template class MPI::FSI<3>;
 using namespace dealii;
 
 int main(int argc, char *argv[]){
+  // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
   const std::string simMeshSolid[] = {"FSIChannelSolid_3D"};
-  //Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
   const std::string simMeshFluid[] = {"FSIChannelFluid_3D"};
   const std::string meshPath = "meshes/";
   const std::string paramsPath = "parameters.prm";
@@ -255,15 +216,18 @@ int main(int argc, char *argv[]){
       }else if(params.simulation_type == "FSI"){
         outputFolder = meshSolid + "_" + meshFluid;
       }  
-      //TODO change meshFluid call to a new output file name
-      //create folder with a title corresponding to the current fluid mesh name
+      //create folder with a title corresponding to the current solid/fluid mesh names
       std::filesystem::create_directory(p / outputFolder);
 
       //iterate through each file in the main directory
       for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
-        //checks if each file is a .vtu or .pvd file
-        //since these are main outputs for each test case, want to move them somewhere safe before starting another simulation
-        if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd"){
+        //checks if each file is relevant to simulation results/output
+          //vtu -> info from separate segmented meshes, one for each processor being used
+          //pvtu -> joins vtu files together for a single timestep, only needed for parallel processes
+          //pvd -> joins pvtu/vtu files together through whole simulation
+          
+        //If files are not moved, then simulations will be overwritten with following simulations
+        if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd" || dirEntry.path().extension() == ".pvtu"){
           
           //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
           std::filesystem::rename(p / dirEntry.path().filename(), p / outputFolder / dirEntry.path().filename());

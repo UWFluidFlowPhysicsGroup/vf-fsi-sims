@@ -86,16 +86,14 @@ target_link_libraries(${TARGET} "/home/nhewko/OpenIFEM/OpenIFEM-build/lib/libope
 # https://p4est.github.io/api/p4est-latest/installing_p4est.html
 
 find_package(MPI REQUIRED)
-message(STATUS ${MPI_INCLUDE_PATH})
-
-# /usr/lib/x86_64-linux-gnu/openmpi/include/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi
-
-message(STATUS ${MPI_LIBRARIES})
-# message(STATUS ${P4EST_LIBRARY_OPTIMIZED})
-# /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
-
+# message(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${MPI_INCLUDE_PATH})
 target_link_libraries(${TARGET} ${MPI_LIBRARIES})
+
+target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../p4est_build/local/include)
+target_link_libraries(${TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/../p4est_build/local/lib/libp4est.so)
+# target_include_directories(${TARGET} PUBLIC "/home/nhewko/p4est_build/local/include")
+# target_link_libraries(${TARGET} "/home/nhewko/p4est_build/local/lib/libp4est.so" stdc++fs)
 
 # include(CTest)
 # enable_testing()
