@@ -69,10 +69,10 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"FSIChannelSolid_3D"};
-  const std::string simMeshFluid[] = {"FSIChannelFluid_3D"};
+  const std::string simMeshSolid[] = {"SquareMeshDualMat"};
+  const std::string simMeshFluid[] = {""};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters.prm";
+  const std::string paramsPath = "parameters_Square.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
@@ -216,6 +216,7 @@ int main(int argc, char *argv[]){
       }else if(params.simulation_type == "FSI"){
         outputFolder = meshSolid + "_" + meshFluid;
       }  
+      //moving file system info is broken for mpi, maybe need to stop mpi connection first?
       //create folder with a title corresponding to the current solid/fluid mesh names
       std::filesystem::create_directory(p / outputFolder);
 
