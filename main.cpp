@@ -40,6 +40,7 @@
 #include "mpi_shared_linear_elasticity.h"
 //fluid slightly compressible navier stokes solver, used cause it seems more stable for simulations?
 #include "mpi_scnsim.h"
+#include "mpi_insim.h"
 //fluid-solid interface solver
 #include "mpi_fsi.h"
 #include "parameters.h"
@@ -58,8 +59,10 @@ extern template class Solid::MPI::SharedLinearElasticity<2>;
 extern template class Solid::MPI::SharedLinearElasticity<3>;
 
 //create fluid objects
-extern template class Fluid::MPI::SCnsIM<2>;
-extern template class Fluid::MPI::SCnsIM<3>;
+// extern template class Fluid::MPI::SCnsIM<2>;
+// extern template class Fluid::MPI::SCnsIM<3>;
+extern template class Fluid::MPI::InsIM<2>;
+extern template class Fluid::MPI::InsIM<3>;
 
 //fluid-solid interface objects
 extern template class MPI::FSI<2>;
@@ -69,10 +72,10 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"SquareMeshDualMat"};
-  const std::string simMeshFluid[] = {""};
+  const std::string simMeshSolid[] = {"VF_M5_BC_FSI_2D"};
+  const std::string simMeshFluid[] = {"VF_Fluid_FSI_2D"};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters_Square.prm";
+  const std::string paramsPath = "parameters_M5_BC.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
