@@ -27,6 +27,10 @@
 #include <map>
 #include <filesystem>
 
+#include <chrono>
+#include <cstdint>
+#include <sstream>
+
 //create solid objects
 extern template class Solid::LinearElasticity<2>;
 extern template class Solid::LinearElasticity<3>;
@@ -62,7 +66,8 @@ class Sim{
 };
 
 namespace {
-const std::string simMeshSolid[] = {""};
+const std::string simMeshSolid[] = {"SquareMesh_4", "SquareMesh_16", "SquareMesh_64", "SquareMesh_256", "SquareMesh_1024", "SquareMesh_4096", "SquareMesh_16384"};
+// const std::string simMeshSolid[] = {"SquareMesh_1024"};
 //Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
 const std::string simMeshFluid[] = {""};
 const std::string meshPath = "meshes/";
@@ -150,7 +155,73 @@ void Sim<dim>::setParams(Parameters::AllParameters params){
 }
 
 int main(){
-  //read parameters file to determine the dimensions present
+  std::cout << "Max random value = " << RAND_MAX << "\n";
+  long int seed = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch()).count();
+  std::cout << seed << "\n";
+  
+  srand(seed);
+  int NCells = 16384;
+  std::ofstream outfile;
+  // std::string filename = "Angle dataset " + to_string(dataset) + ".csv";
+  // outfile.open(filename);
+  // outfile.open("Angle dataset", to_string(dataset), ".csv");
+  outfile.open("Angle dataset.csv");
+  for (int i = 0; i < NCells; i++){
+    dealii::Tensor<1,2> rnd_fiber;
+    //generate equivalent fiber directions
+    rnd_fiber[0] = (std::rand()-double(RAND_MAX)/2);
+    rnd_fiber[1] = (std::rand()-double(RAND_MAX)/2);
+
+    dealii::Tensor<1, 2> xaxis;
+    xaxis[0] = 1;
+
+    double theta = rnd_fiber.norm() == 0 ? 0 : dealii::Physics::VectorRelations::angle(rnd_fiber, xaxis);
+    //double theta = fiberxy.norm() == 0 ? 0 : (fiber[1] > 0 ? dealii::Physics::VectorRelations::angle(fiberxy, xaxis) : -dealii::Physics::VectorRelations::angle(fiberxy, xaxis));
+    theta = rnd_fiber[1] > 0 ? theta : -theta;
+    // theta = theta*180/M_PI;
+    // std::cout << theta << "\n";
+
+    outfile << theta << "\n";
+  }
+  outfile.close();
+
+  // for (int dataset = 0; dataset < 10; dataset++){
+  //   // long int seed = static_cast<long int>(time(NULL));
+  //   // std::chrono::milliseconds ms = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
+  //   long int seed = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch()).count();
+  //   std::cout << seed << "\n";
+    
+  //   srand(seed);
+  //   int NCells = 16384;
+  //   std::ofstream outfile;
+  //   // std::string filename = "Angle dataset " + to_string(dataset) + ".csv";
+  //   // outfile.open(filename);
+  //   // outfile.open("Angle dataset", to_string(dataset), ".csv");
+  //   outfile.open("Angle dataset.csv");
+  //   for (int i = 0; i < NCells; i++){
+  //     dealii::Tensor<1,2> rnd_fiber;
+  //     //generate equivalent fiber directions
+  //     rnd_fiber[0] = (std::rand()-double(RAND_MAX)/2);
+  //     rnd_fiber[1] = (std::rand()-double(RAND_MAX)/2);
+
+  //     dealii::Tensor<1, 2> xaxis;
+  //     xaxis[0] = 1;
+
+  //     double theta = rnd_fiber.norm() == 0 ? 0 : dealii::Physics::VectorRelations::angle(rnd_fiber, xaxis);
+  //     //double theta = fiberxy.norm() == 0 ? 0 : (fiber[1] > 0 ? dealii::Physics::VectorRelations::angle(fiberxy, xaxis) : -dealii::Physics::VectorRelations::angle(fiberxy, xaxis));
+  //     theta = rnd_fiber[1] > 0 ? theta : -theta;
+  //     // theta = theta*180/M_PI;
+  //     // std::cout << theta << "\n";
+
+  //     outfile << theta << "\n";
+  //   }
+  //   outfile.close();
+  //   sleep(1);
+  // }
+  
+
+
+/*  //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
 
   //iterate through each fluid mesh that was given
@@ -215,5 +286,5 @@ int main(){
       }
     
     }
-  }
+  }*/
 }

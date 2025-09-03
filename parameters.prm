@@ -18,7 +18,7 @@ subsection Simulation
   set Global refinements = 0, 0
 
   # The end time of the simulation in second
-  set End time = 2e0
+  set End time = 1
 
   # The time step in second
   set Time step size = 1e-2
@@ -80,7 +80,7 @@ subsection Fluid Dirichlet BCs
   set Use hard-coded boundary values = 0
 
   # Number of boundaries with Dirichlet BCs
-  set Number of Dirichlet BCs = 0
+  set Number of Dirichlet BCs = 1
 
   # List all the boundaries with Dirichlet BCs
   set Dirichlet boundary id = 0
@@ -127,24 +127,25 @@ subsection Solid material properties
 
   # Isotropic material properties (Pa)
   # E and nu are only used by Isotropic LinearElastic materials
-  set Young's modulus = 70e9
+  set Young's modulus = 1.7544e3
 
-  set Poisson's ratio = 0.25
+  set Poisson's ratio = 0.4
+  # 0.1222
 
   # Anisotropic material properties
   # Initial fiber direction for non isotropic materials only. Expecting number of materials * dim values
-  set Initial fiber direction = 1, 0
+  set Initial fiber direction = 1, 1
 
   # Young's modulus (Pa) in fiber direction, only used for transverse isotropic materials
-  set Young's modulus 1 = 131e9
+  set Young's modulus 1 = 30e3
   # 30e3
 
   # Young's modulus (Pa) pependicular to fiber direction, only used for transverse isotropic materials
-  set Young's modulus 2 = 10.3e9
+  set Young's modulus 2 = 1e3
   # 1e3
 
   # Poisson's ratio involving fiber direction, only used for transverse isotropic materials
-  set Poisson's ratio 12 = 0.22
+  set Poisson's ratio 12 = 0.49
   # 0.57
 
   # Poisson's ratio in plane of isotropy, only used for transverse isotropic materials
@@ -152,7 +153,8 @@ subsection Solid material properties
   # 0.57
 
   # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
-  set Shear modulus = 6.9e9
+  set Shear modulus = 0.67e3 
+  # 0.67e3
   # 13.9e3
 
   # A list of parameters used by hyperelasticMaterial
@@ -161,7 +163,7 @@ end
 
 subsection Solid solver control
   # Artifitial damping. (dyne cm^-1) (10^-3 N m^-1)
-  set Damping = 0.0
+  set Damping = 0
 
   # Number of Newton-Raphson iterations allowed, used by hyperelastic solver only
   set Max Newton iterations = 10
@@ -176,10 +178,10 @@ end
 # Only homogeneous Dirichlet BC is supported, i.e., the prescribed value is always 0.
 subsection Solid Dirichlet BCs
   # Dirichlet BCs can be applied to multiple boundaries.
-  set Number of Dirichlet BCs = 0
+  set Number of Dirichlet BCs = 1
 
   # List all the constrained boundaries here
-  set Dirichlet boundary id = 0
+  set Dirichlet boundary id = 11
 
   # List the constrained components of these boundaries
   # One decimal number indicates one set of constrained components:
@@ -193,10 +195,10 @@ end
 # (Original normal vectors are used to compute the traction.)
 subsection Solid Neumann BCs
   # Indicates how many sets of Neumann boundary conditions to expect.
-  set Number of Neumann BCs = 0
+  set Number of Neumann BCs = 1
 
   # The id, type, and values must appear n_neumann_bcs times.
-  set Neumann boundary id = 0
+  set Neumann boundary id = 13
 
   # Traction/Pressure, currently they cannot coexist.
   set Neumann boundary type = Traction
@@ -204,5 +206,5 @@ subsection Solid Neumann BCs
   # If traction, dim*n_solid_neumann_bcs components are expected;
   # if pressure, n_solid_neumann_bcs components are expected. (dyne cm^-2) -> (0.1Pa)
   # traction sets values in x, y, z directions, pressure sets normal to original face direction
-  set Neumann boundary values = 0, 0
+  set Neumann boundary values = 0, 1e2
 end
