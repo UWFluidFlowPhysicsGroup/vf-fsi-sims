@@ -30,6 +30,7 @@
 #include <chrono>
 #include <cstdint>
 #include <sstream>
+#include <random>
 
 //create solid objects
 extern template class Solid::LinearElasticity<2>;
@@ -155,73 +156,107 @@ void Sim<dim>::setParams(Parameters::AllParameters params){
 }
 
 int main(){
-  std::cout << "Max random value = " << RAND_MAX << "\n";
-  long int seed = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch()).count();
-  std::cout << seed << "\n";
+
+  /*
+  // std::random_device rd;
+  //can replace rd() to a constant instead for seed
+  std::mt19937 gen(1);
+  //can use other random number generation methods https://en.cppreference.com/w/cpp/numeric/random.html
+  //ex. normal distribution for deviatioin from a main fiber direction
+  std::uniform_real_distribution<> dist(-M_PI, M_PI);
+
+
+  //new code generates random angles in n x n format 
+  int NCellX = 32;
   
-  srand(seed);
-  int NCells = 16384;
-  std::ofstream outfile;
+  // std::cout << "Max random value = " << RAND_MAX << "\n";
+  // long int seed = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch()).count();
+  // std::cout << seed << "\n";
+  // srand(seed);
+  std::ofstream outfile;  
+  outfile.open("Rand dataset_" + std::to_string(NCellX*NCellX) + ".csv");
+
   // std::string filename = "Angle dataset " + to_string(dataset) + ".csv";
   // outfile.open(filename);
   // outfile.open("Angle dataset", to_string(dataset), ".csv");
-  outfile.open("Angle dataset.csv");
-  for (int i = 0; i < NCells; i++){
-    dealii::Tensor<1,2> rnd_fiber;
-    //generate equivalent fiber directions
-    rnd_fiber[0] = (std::rand()-double(RAND_MAX)/2);
-    rnd_fiber[1] = (std::rand()-double(RAND_MAX)/2);
+  // int NCells = 16384;
+  // for (int i = 0; i < NCells; i++){
+  //   // 2D ANGLE GENERATION
+  //   double gentheta = dist(gen);
+  //   double genphi = 0;
+  //   dealii::Tensor<1,2> rnd_fiber;
+  //   //generate equivalent fiber directions from the generated theta angle
+  //   rnd_fiber[0] = cos(gentheta)*cos(genphi);
+  //   rnd_fiber[1] = sin(gentheta)*cos(genphi);
+  //   // outfile << rnd_fiber[0] << "," << rnd_fiber[1] << "\n";
 
-    dealii::Tensor<1, 2> xaxis;
-    xaxis[0] = 1;
+  //   dealii::Tensor<1, 2> xaxis;
+  //   xaxis[0] = 1;
 
-    double theta = rnd_fiber.norm() == 0 ? 0 : dealii::Physics::VectorRelations::angle(rnd_fiber, xaxis);
-    //double theta = fiberxy.norm() == 0 ? 0 : (fiber[1] > 0 ? dealii::Physics::VectorRelations::angle(fiberxy, xaxis) : -dealii::Physics::VectorRelations::angle(fiberxy, xaxis));
-    theta = rnd_fiber[1] > 0 ? theta : -theta;
-    // theta = theta*180/M_PI;
-    // std::cout << theta << "\n";
+  //   double theta = rnd_fiber.norm() == 0 ? 0 : dealii::Physics::VectorRelations::angle(rnd_fiber, xaxis);
+  //   // double theta = fiberxy.norm() == 0 ? 0 : (fiber[1] > 0 ? dealii::Physics::VectorRelations::angle(fiberxy, xaxis) : -dealii::Physics::VectorRelations::angle(fiberxy, xaxis));
+  //   theta = rnd_fiber[1] > 0 ? theta : -theta;
+  //   // theta = theta*180/M_PI;
 
-    outfile << theta << "\n";
+  //   outfile << theta << "\n";
+  // }
+
+
+  //columns
+  for (int y = 0; y <= NCellX; y++){
+    //rows
+    for (int x = 0; x <= NCellX; x++){
+      double gentheta = dist(gen);
+      double genphi = 0;
+      dealii::Tensor<1,2> rnd_fiber;
+      //generate equivalent fiber directions from the generated theta angle
+      rnd_fiber[0] = cos(gentheta)*cos(genphi);
+      rnd_fiber[1] = sin(gentheta)*cos(genphi);
+      
+      dealii::Tensor<1, 2> xaxis;
+      xaxis[0] = 1;
+
+      double theta = rnd_fiber.norm() == 0 ? 0 : dealii::Physics::VectorRelations::angle(rnd_fiber, xaxis);
+      // double theta = fiberxy.norm() == 0 ? 0 : (fiber[1] > 0 ? dealii::Physics::VectorRelations::angle(fiberxy, xaxis) : -dealii::Physics::VectorRelations::angle(fiberxy, xaxis));
+      theta = rnd_fiber[1] > 0 ? theta : -theta;
+      // theta = theta*180/M_PI;
+      outfile << theta;
+      if (x < NCellX){
+        outfile << ",";
+      }
+    }
+    outfile << "\n";
   }
   outfile.close();
-
-  // for (int dataset = 0; dataset < 10; dataset++){
-  //   // long int seed = static_cast<long int>(time(NULL));
-  //   // std::chrono::milliseconds ms = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
-  //   long int seed = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch()).count();
-  //   std::cout << seed << "\n";
-    
-  //   srand(seed);
-  //   int NCells = 16384;
-  //   std::ofstream outfile;
-  //   // std::string filename = "Angle dataset " + to_string(dataset) + ".csv";
-  //   // outfile.open(filename);
-  //   // outfile.open("Angle dataset", to_string(dataset), ".csv");
-  //   outfile.open("Angle dataset.csv");
-  //   for (int i = 0; i < NCells; i++){
-  //     dealii::Tensor<1,2> rnd_fiber;
-  //     //generate equivalent fiber directions
-  //     rnd_fiber[0] = (std::rand()-double(RAND_MAX)/2);
-  //     rnd_fiber[1] = (std::rand()-double(RAND_MAX)/2);
-
-  //     dealii::Tensor<1, 2> xaxis;
-  //     xaxis[0] = 1;
-
-  //     double theta = rnd_fiber.norm() == 0 ? 0 : dealii::Physics::VectorRelations::angle(rnd_fiber, xaxis);
-  //     //double theta = fiberxy.norm() == 0 ? 0 : (fiber[1] > 0 ? dealii::Physics::VectorRelations::angle(fiberxy, xaxis) : -dealii::Physics::VectorRelations::angle(fiberxy, xaxis));
-  //     theta = rnd_fiber[1] > 0 ? theta : -theta;
-  //     // theta = theta*180/M_PI;
-  //     // std::cout << theta << "\n";
-
-  //     outfile << theta << "\n";
-  //   }
-  //   outfile.close();
-  //   sleep(1);
-  // }
+  */
   
+  //   // // 3D ANGLE GENERATION
+  //   // double gentheta = dist(gen);
+  //   // //need different generator for phi? seems to be biased towards phi = +- pi/2
+  //   // double genphi = dist(gen)-M_PI/2;
 
+  //   // dealii::Tensor<1,3> rnd_fiber, rnd_fiberxy, xaxis;
+  //   // //generate equivalent fiber directions from the generated theta angle
+  //   // rnd_fiber[0] = cos(gentheta)*cos(genphi);
+  //   // rnd_fiber[1] = sin(gentheta)*cos(genphi);
+  //   // rnd_fiber[2] = sin(genphi);
 
-/*  //read parameters file to determine the dimensions present
+  //   // rnd_fiberxy[0] = rnd_fiber[0];
+  //   // rnd_fiberxy[1] = rnd_fiber[1];
+    
+  //   // xaxis[0] = 1;
+    
+  //   // double theta = rnd_fiberxy.norm() == 0 ? 0 : dealii::Physics::VectorRelations::angle(rnd_fiberxy, xaxis);
+  //   // theta = rnd_fiber[1] > 0 ? theta : -theta;
+  //   // double phi = rnd_fiberxy.norm() == 0 ? M_PI/2 : dealii::Physics::VectorRelations::angle(rnd_fiber, rnd_fiberxy);
+  //   // phi = rnd_fiber[2] > 0 ? phi : -phi;
+
+  //   // outfile << theta << "," << phi << "\n";
+  // }
+  // outfile.close();
+
+  
+  //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
 
   //iterate through each fluid mesh that was given
@@ -284,7 +319,7 @@ int main(){
           std::filesystem::rename(p / dirEntry.path().filename(), p / outputFolder / dirEntry.path().filename());
         }
       }
-    
     }
-  }*/
+  }
+
 }
