@@ -156,63 +156,37 @@ void Sim<dim>::setParams(Parameters::AllParameters params){
 }
 
 int main(){
-
   /*
-  // std::random_device rd;
-  //can replace rd() to a constant instead for seed
-  std::mt19937 gen(1);
-  //can use other random number generation methods https://en.cppreference.com/w/cpp/numeric/random.html
-  //ex. normal distribution for deviatioin from a main fiber direction
-  std::uniform_real_distribution<> dist(-M_PI, M_PI);
-
-
   //new code generates random angles in n x n format 
   int NCellX = 32;
-  
-  // std::cout << "Max random value = " << RAND_MAX << "\n";
-  // long int seed = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch()).count();
-  // std::cout << seed << "\n";
-  // srand(seed);
-  std::ofstream outfile;  
-  outfile.open("Rand dataset_" + std::to_string(NCellX*NCellX) + ".csv");
 
-  // std::string filename = "Angle dataset " + to_string(dataset) + ".csv";
-  // outfile.open(filename);
-  // outfile.open("Angle dataset", to_string(dataset), ".csv");
-  // int NCells = 16384;
-  // for (int i = 0; i < NCells; i++){
-  //   // 2D ANGLE GENERATION
-  //   double gentheta = dist(gen);
-  //   double genphi = 0;
-  //   dealii::Tensor<1,2> rnd_fiber;
-  //   //generate equivalent fiber directions from the generated theta angle
-  //   rnd_fiber[0] = cos(gentheta)*cos(genphi);
-  //   rnd_fiber[1] = sin(gentheta)*cos(genphi);
-  //   // outfile << rnd_fiber[0] << "," << rnd_fiber[1] << "\n";
+  for(int dataset = 0; dataset < 10; dataset++){
+    // std::random_device rd;
+    //can replace rd() to a constant instead for seed
+    std::mt19937 gen(1);
+    //can use other random number generation methods https://en.cppreference.com/w/cpp/numeric/random.html
+    //ex. normal distribution for deviatioin from a main fiber direction
+    // std::uniform_real_distribution<> dist(-M_PI, M_PI);
+    std::uniform_real_distribution<> dist(-1000, 1000);
+    std::ofstream outfile;  
+    std::string filename = "XY dataset " + std::to_string(dataset) + ".csv";
+    outfile.open(filename);
 
-  //   dealii::Tensor<1, 2> xaxis;
-  //   xaxis[0] = 1;
-
-  //   double theta = rnd_fiber.norm() == 0 ? 0 : dealii::Physics::VectorRelations::angle(rnd_fiber, xaxis);
-  //   // double theta = fiberxy.norm() == 0 ? 0 : (fiber[1] > 0 ? dealii::Physics::VectorRelations::angle(fiberxy, xaxis) : -dealii::Physics::VectorRelations::angle(fiberxy, xaxis));
-  //   theta = rnd_fiber[1] > 0 ? theta : -theta;
-  //   // theta = theta*180/M_PI;
-
-  //   outfile << theta << "\n";
-  // }
-
-
-  //columns
-  for (int y = 0; y <= NCellX; y++){
-    //rows
-    for (int x = 0; x <= NCellX; x++){
-      double gentheta = dist(gen);
-      double genphi = 0;
+    int NCells = 16384;
+    for (int i = 0; i < NCells; i++){
+      // 2D ANGLE GENERATION
+      // double gentheta = dist(gen);
+      // double genphi = 0;
       dealii::Tensor<1,2> rnd_fiber;
       //generate equivalent fiber directions from the generated theta angle
-      rnd_fiber[0] = cos(gentheta)*cos(genphi);
-      rnd_fiber[1] = sin(gentheta)*cos(genphi);
-      
+      // rnd_fiber[0] = cos(gentheta)*cos(genphi);
+      // rnd_fiber[1] = sin(gentheta)*cos(genphi);
+
+      rnd_fiber[0] = dist(gen);
+      rnd_fiber[1] = dist(gen);
+
+      // outfile << rnd_fiber[0] << "," << rnd_fiber[1] << "\n";
+
       dealii::Tensor<1, 2> xaxis;
       xaxis[0] = 1;
 
@@ -220,15 +194,41 @@ int main(){
       // double theta = fiberxy.norm() == 0 ? 0 : (fiber[1] > 0 ? dealii::Physics::VectorRelations::angle(fiberxy, xaxis) : -dealii::Physics::VectorRelations::angle(fiberxy, xaxis));
       theta = rnd_fiber[1] > 0 ? theta : -theta;
       // theta = theta*180/M_PI;
-      outfile << theta;
-      if (x < NCellX){
-        outfile << ",";
-      }
+
+      outfile << theta << "\n";
     }
-    outfile << "\n";
+
+
+    // //columns
+    // for (int y = 0; y <= NCellX; y++){
+    //   //rows
+    //   for (int x = 0; x <= NCellX; x++){
+    //     double gentheta = dist(gen);
+    //     double genphi = 0;
+    //     dealii::Tensor<1,2> rnd_fiber;
+    //     //generate equivalent fiber directions from the generated theta angle
+    //     rnd_fiber[0] = cos(gentheta)*cos(genphi);
+    //     rnd_fiber[1] = sin(gentheta)*cos(genphi);
+        
+    //     dealii::Tensor<1, 2> xaxis;
+    //     xaxis[0] = 1;
+
+    //     double theta = rnd_fiber.norm() == 0 ? 0 : dealii::Physics::VectorRelations::angle(rnd_fiber, xaxis);
+    //     // double theta = fiberxy.norm() == 0 ? 0 : (fiber[1] > 0 ? dealii::Physics::VectorRelations::angle(fiberxy, xaxis) : -dealii::Physics::VectorRelations::angle(fiberxy, xaxis));
+    //     theta = rnd_fiber[1] > 0 ? theta : -theta;
+    //     // theta = theta*180/M_PI;
+    //     outfile << theta;
+    //     if (x < NCellX){
+    //       outfile << ",";
+    //     }
+    //   }
+    //   outfile << "\n";
+    // }
+    outfile.close();
   }
-  outfile.close();
   */
+  
+  
   
   //   // // 3D ANGLE GENERATION
   //   // double gentheta = dist(gen);
