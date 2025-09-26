@@ -1,3 +1,21 @@
+// Build commands to set up libraries, need to export p4est library path each time Ubuntu is launched:
+// not needed if added to .bashrc file in home directory
+// export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/p4est_build/local/lib
+
+// modified CMakeLists to not need -I and -L commands anymore, still need -l commands
+// sudo make main -I $HOME/p4est_build/local/include -L $HOME/p4est_build/local/lib -lp4est -lsc -lz -lm
+// mpiexec -n 4 main
+
+// Replace 4 with number of cores you wish to run
+
+//https://education.molssi.org/parallel-programming/04-distributed-examples.html
+//https://stackoverflow.com/questions/23163075/how-to-compile-an-mpi-included-c-program-using-cmake
+//https://hpc-discourse.usc.edu/t/use-cmake-in-an-mpi-c-program/507/4
+//https://stackoverflow.com/questions/11368215/loading-shared-library-in-open-mpi-mpi-run
+
+//https://p4est.github.io/api/p4est-latest/installing_p4est.html
+//https://education.molssi.org/parallel-programming/04-distributed-examples.html
+
 //import dealII libraries
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/tria_accessor.h>
@@ -6,18 +24,27 @@
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/grid_in.h>
+#include <deal.II/dofs/dof_handler.h>
+#include <deal.II/dofs/dof_tools.h>
+
+//import dealII libraries for parallel computing
+#include <deal.II/distributed/grid_refinement.h>
+#include <deal.II/distributed/solution_transfer.h>
+#include <deal.II/distributed/tria.h>
+
+#include <mpi.h>
+#include <deal.II/base/mpi.h>
 
 //import OpenIFEM libraries
 //solid linear elastic solver
-#include "linear_elasticity.h"
-//fluid incompressible navier stokes solver
-#include "insim.h"
+#include "mpi_shared_linear_elasticity.h"
+//fluid slightly compressible navier stokes solver, used cause it seems more stable for simulations?
+#include "mpi_scnsim.h"
+#include "mpi_insim.h"
 //fluid-solid interface solver
-#include "fsi.h"
-
+#include "mpi_fsi.h"
 #include "parameters.h"
 #include "utilities.h"
-
 
 //import c++ libraries
 #include <iostream>
@@ -28,176 +55,374 @@
 #include <filesystem>
 
 //create solid objects
-extern template class Solid::LinearElasticity<2>;
-extern template class Solid::LinearElasticity<3>;
+extern template class Solid::MPI::SharedLinearElasticity<2>;
+extern template class Solid::MPI::SharedLinearElasticity<3>;
+
 //create fluid objects
-extern template class Fluid::InsIM<2>;
-extern template class Fluid::InsIM<3>;
+// extern template class Fluid::MPI::SCnsIM<2>;
+// extern template class Fluid::MPI::SCnsIM<3>;
+extern template class Fluid::MPI::InsIM<2>;
+extern template class Fluid::MPI::InsIM<3>;
+
 //fluid-solid interface objects
-extern template class FSI<2>;
-extern template class FSI<3>;
+extern template class MPI::FSI<2>;
+extern template class MPI::FSI<3>;
 
 using namespace dealii;
 
-namespace {
-const std::string simMeshSolid[] = {"FSIChannelSolid_20_2", "FSIChannelSolid_20_1", "FSIChannelSolid_20_0.5"};
-//Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
-const std::string simMeshFluid = "FSIChannelFluid";
-const std::string meshPath = "meshes/";
-//TODO simplify parameters strings existing - leave to only 2d form for now?
-const std::string paramsPath2d = "parameters2d.prm";
-const std::string paramsPath3d = "parameters3d.prm";
+int main(int argc, char *argv[]){
+  // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
+  const std::string simMeshSolid[] = {"VF_M5_BC_FSI_2D"};
+  const std::string simMeshFluid[] = {"VF_Fluid_FSI_2D"};
+  const std::string meshPath = "meshes/";
+  const std::string paramsPath = "parameters_M5_BC.prm";
+  //read parameters file to determine the dimensions present
+  Parameters::AllParameters params(paramsPath);
+  GridOut gridOut;
+  Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
 
-//define objects for both 2d and 3d mesh manipulation
-Triangulation<2> tria2dFluid;
-Triangulation<3,3> tria3dFluid;
-
-Triangulation<2> tria2dSolid;
-Triangulation<3,3> tria3dSolid;
-
-GridIn<2> gridIn2d;
-GridIn<3> gridIn3d;
-
-GridOut gridOut;
-}
-
-//imports a mesh and outputs svg file in the XY plane
-int loadMesh2d(std::string meshNameSolid, std::string meshNameFluid){
-  //identifies mesh to be imported from meshes folder
-  std::ifstream solidPath(meshPath + meshNameSolid + ".msh");
-  std::ifstream fluidPath(meshPath + meshNameFluid + ".msh");
-  //checks if desired mesh can be read
-  if (!solidPath){
-    //Display error handler that the solid mesh cannot be found
-    std::cerr << "----------------------------------------------------"
-              << "ERROR FINDING SOLID MESH FILE " << meshNameSolid 
-              << "----------------------------------------------------";
-    //return to kill the class
-    return -1;
-  } else if (!fluidPath){
-    //Display error handler that file cannot be found
-    std::cerr << "----------------------------------------------------"
-              << "ERROR FINDING FLUID MESH FILE " << meshNameFluid
-              << "----------------------------------------------------";
-    //return to kill the class
-    return -1;
-  }
-
-
-
-  //TODO write if statement to check if 2d or 3d mesh being imported, maybe try catch as 3d and have 2d in the catch segment and merge with extrude class?
-  //define 2D GridIn object to receive 2d mesh
-  gridIn2d.attach_triangulation(tria2dSolid);
-  //imports mesh from selected area
-  gridIn2d.read_msh(solidPath);
-  
-  //repeat same for fluid mesh
-  gridIn2d.attach_triangulation(tria2dFluid);
-  gridIn2d.read_msh(fluidPath);
-  
-  //std::cout << std::filesystem::current_path();
-
-  //prepares squareMesh.svg file
-  //std::ofstream out(meshName + ".svg");
-  //writes refined mesh to svg in XY plane
-  //gridOut.write_svg(tria2d, out);
-  return 0;
-}
-
-int importParams2d(std::string paramName){
-    //import params from .prm file and assign to 2d square
-    Parameters::AllParameters params(paramName);
-    //import params for both solid and fluid meshes separately
-    Solid::LinearElasticity<2> solid(tria2dSolid, params);
-    Fluid::InsIM<2> fluid(tria2dFluid, params);
-    //combine solid and fluid meshes to make FSI simulation
-    FSI<2> fsi(fluid, solid, params, true);
-    fsi.run();
-    
-    return 0;
-}
-
-/*
-Commenting out because focusing on 2d mesh for now
-//imports a 3D mesh and outputs svg file in the XY plane
-int loadMesh3d(std::string meshName){
-  //identifies mesh to be imported from meshes folder
-  std::ifstream f(meshPath + meshName + ".msh");
-  //checks if desired mesh can be read
-  if (!f){
-    //Display error handler that file cannot be found
-    std::cerr << "----------------------------------------------------"
-              << "ERROR FINDING MESH FILE " << meshName
-              << "----------------------------------------------------";
-    //return to kill the class
-    return -1;
-  }
-
-  //TODO write if statement to check if 2d or 3d mesh being imported, maybe try catch as 3d and have 2d in the catch segment and merge with extrude class?
-  //define 2D GridIn object to receive 2d mesh
-  gridIn3d.attach_triangulation(tria3d);
-  //imports mesh from selected area
-  gridIn3d.read_msh(f);
-  
-  return 1;
-}
-
-int importParams3d(std::string paramName){
-    //import params from .prm file
-    Parameters::AllParameters params(paramName);
-    Solid::LinearElasticity<3> solid(tria3dSolid, params);
-    Fluid::InsIM<3> fluid(tria3dFluid, params);
-    FSI<3> fsi(fluid, solid, params, true);
-    fsi.run();
-    
-    return 0;
-}
-*/
-
-/*
-Commented out extrude and refine functions because focusing on 2d shape first and refining in gmsh instead of c++ dealii
-//takes input 2d mesh from before and extrudes to a 3d shape, exports shape to .geo file
-int extrude(){  
-  //2d input, number of slices, height, output height, output triangulation
-  GridGenerator::extrude_triangulation(tria2d, 7, 12.0, tria3d);
-  std::ofstream out(meshPath + "vocalFold3d.msh");
-  gridOut.write_msh(tria3d, out);
-  return 0;
-}
-
-int refine(int i){
-  //refine_global is set to 1 subdivision because mesh is subdivided from previous loop 
-  //one further step into refinement
-  tria3d.refine_global(1);
-  //output the refined mesh with a different name based on refinement levevl
-  std::ofstream out(meshPath + "vocalFold3d" + std::to_string(i) + ".msh");
-  gridOut.write_msh(tria3d, out);
-  return 0;
-}
-*/
-
-
-int main(){
   //iterate through each fluid mesh that was given
-  for(const std::string &meshSolid : simMeshSolid){
-    //load meshes through loadMesh class
-    loadMesh2d(meshSolid, simMeshFluid);
-    //import parameters through importParams class
-    importParams2d(paramsPath2d);
-    
-    //define path to current file location
-    std::filesystem::path p = std::filesystem::current_path();
-    //create folder with a title corresponding to the current fluid mesh name
-    std::filesystem::create_directory(p / meshSolid);
+  for(const std::string &meshFluid : simMeshFluid){
+    //iterate through each solid mesh
+    for(const std::string &meshSolid : simMeshSolid){
+      //This section has to be hard coded, since the creation of the Sim object requires a constant variable input
+      //the value of ‘dims’ is not usable in a constant expression
+      if (params.dimension == 2){
+        //solid is still regular triangulation object, not distributed
+        Triangulation<2> triaSolid;
+        parallel::distributed::Triangulation<2> triaFluid(MPI_COMM_WORLD);
+        DoFHandler<2> dof_handler;
+        GridIn<2> gridIn;
 
-    //iterate through each file in the main directory 
-    for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
-      //checks if each file is a .vtu or .pvd file
-      //since these are main outputs for each test case, want to move them somewhere safe before starting another simulation
-      if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd"){
-        //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
-        std::filesystem::rename(p / dirEntry.path().filename(), p / meshSolid / dirEntry.path().filename());
+        if(params.simulation_type == "Solid" || params.simulation_type == "FSI"){
+          // Dynamically define path for solid mesh location
+          std::ifstream solidPath(meshPath + meshSolid + ".msh");
+          // Check if given mesh path is valid
+          if (!solidPath){
+            std::cerr << "----------------------------------------------------" << "\n"
+                      << "ERROR FINDING SOLID MESH FILE " << meshSolid  << "\n"
+                      << "----------------------------------------------------" << "\n";
+            //exit the program
+            exit(0);
+          }
+          //define GridIn object to receive 2d mesh
+          gridIn.attach_triangulation(triaSolid);
+          //imports mesh from selected area
+          gridIn.read_msh(solidPath);
+        }
+
+        if (params.simulation_type == "Fluid" || params.simulation_type == "FSI"){
+          // Dynamically define path for fluid mesh location
+          std::ifstream fluidPath(meshPath + meshFluid + ".msh");
+          // Check if given mesh path is valid
+          if (!fluidPath){
+            std::cerr << "----------------------------------------------------" << "\n"
+                      << "ERROR FINDING FLUID MESH FILE " << meshFluid << "\n"
+                      << "----------------------------------------------------" << "\n";
+            exit(0);
+          }
+          //define GridIn object to receive fluid mesh
+          gridIn.attach_triangulation(triaFluid);
+          //imports the fluid mesh from the valid file path
+          gridIn.read_msh(fluidPath);
+        }
+
+        //sim.loadMesh(meshSolid, meshFluid);
+          if (params.simulation_type == "Solid"){
+            Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
+            solid.run();
+          }else if(params.simulation_type == "Fluid"){
+            Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
+            fluid.run();
+          }else if(params.simulation_type == "FSI"){
+            //combine solid and fluid meshes to make FSI simulation
+            Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
+            Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
+            MPI::FSI<2> fsi(fluid, solid, params, true);
+            fsi.run();
+          }else{
+            //error occured
+            exit(0);
+          }
+
+      } else if (params.dimension == 3){
+        Triangulation<3> triaSolid;
+        parallel::distributed::Triangulation<3> triaFluid(MPI_COMM_WORLD);
+        DoFHandler<3> dof_handler;
+        GridIn<3> gridIn;
+
+        if(params.simulation_type == "Solid" || params.simulation_type == "FSI"){
+          // Dynamically define path for solid mesh location
+          std::ifstream solidPath(meshPath + meshSolid + ".msh");
+          // Check if given mesh path is valid
+          if (!solidPath){
+            std::cerr << "----------------------------------------------------" << "\n"
+                      << "ERROR FINDING SOLID MESH FILE " << meshSolid  << "\n"
+                      << "----------------------------------------------------" << "\n";
+            //exit the program
+            exit(0);
+          }
+          //define GridIn object to receive 2d mesh
+          gridIn.attach_triangulation(triaSolid);
+          //imports mesh from selected area
+          gridIn.read_msh(solidPath);
+        }
+        if (params.simulation_type == "Fluid" || params.simulation_type == "FSI"){
+          // Dynamically define path for fluid mesh location
+          std::ifstream fluidPath(meshPath + meshFluid + ".msh");
+          // Check if given mesh path is valid
+          if (!fluidPath){
+            std::cerr << "----------------------------------------------------" << "\n"
+                      << "ERROR FINDING FLUID MESH FILE " << meshFluid << "\n"
+                      << "----------------------------------------------------" << "\n";
+            exit(0);
+          }
+          //define GridIn object to receive fluid mesh
+          gridIn.attach_triangulation(triaFluid);
+          //imports the fluid mesh from the valid file path
+          gridIn.read_msh(fluidPath);
+        }
+
+        //sim.loadMesh(meshSolid, meshFluid);
+          if (params.simulation_type == "Solid"){
+            Solid::MPI::SharedLinearElasticity<3> solid(triaSolid, params);
+            solid.run();
+          }else if(params.simulation_type == "Fluid"){
+            Fluid::MPI::SCnsIM<3> fluid(triaFluid, params);
+            fluid.run();
+          }else if(params.simulation_type == "FSI"){
+            //combine solid and fluid meshes to make FSI simulation
+            Solid::MPI::SharedLinearElasticity<3> solid(triaSolid, params);
+            Fluid::MPI::SCnsIM<3> fluid(triaFluid, params);
+            MPI::FSI<3> fsi(fluid, solid, params, true);
+            fsi.run();
+          }else{
+            //error occured
+            exit(0);
+          }
+
+        
+      } else {
+        std::cerr << "Cannot find dimension from parameters file" << std::endl
+                  << "Check if " << paramsPath << "exists or has valid dimensions";
+        exit(0);
+      }
+
+      //define path to current file location
+      std::filesystem::path p = std::filesystem::current_path();
+      
+      std::string outputFolder;
+      if (params.simulation_type == "Solid"){
+        outputFolder = meshSolid;
+      }else if(params.simulation_type == "Fluid"){
+        outputFolder = meshFluid;
+      }else if(params.simulation_type == "FSI"){
+        outputFolder = meshSolid + "_" + meshFluid;
+      }  
+      //moving file system info is broken for mpi, maybe need to stop mpi connection first?
+      //create folder with a title corresponding to the current solid/fluid mesh names
+      std::filesystem::create_directory(p / outputFolder);
+
+      //iterate through each file in the main directory
+      for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
+        //checks if each file is relevant to simulation results/output
+          //vtu -> info from separate segmented meshes, one for each processor being used
+          //pvtu -> joins vtu files together for a single timestep, only needed for parallel processes
+          //pvd -> joins pvtu/vtu files together through whole simulation
+          
+        //If files are not moved, then simulations will be overwritten with following simulations
+        if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd" || dirEntry.path().extension() == ".pvtu"){
+          
+          //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
+          std::filesystem::rename(p / dirEntry.path().filename(), p / outputFolder / dirEntry.path().filename());
+        }
       }
     }
   }
 }
+
+
+
+
+
+
+// //Vars in unnamed namespace to avoid reading from other files
+// template <int dim>
+// class Sim{
+//   public:
+//     //extern template class Solid::LinearElasticity<dim>;
+//     Sim();
+//     void loadSolid(std::string solidMeshName);
+//     void loadFluid(std::string fluidMeshName);
+//     void setParams(Parameters::AllParameters params);
+//     //Triangulation<3> extrude(); 
+//     //int refine(int refinement);
+//     //is this expecting to call a function?
+//     // Solid::LinearElasticity<dim> solid(Triangulation<dim> triaSolid, Parameters::AllParameters params);
+//     // Fluid::InsIM<dim> fluid(Triangulation<dim> triaFluid, Parameters::AllParameters params);
+
+//   private:
+//     //how to create triaFluid with MPI_COMM_WORLD as argument for each instance?
+//     parallel::distributed::Triangulation<dim> triaFluid(MPI_COMM_WORLD);
+//     Triangulation<dim> triaSolid;
+//     DoFHandler<dim> dof_handler;
+//     GridIn<dim> gridIn;
+
+// };
+
+// namespace {
+// const std::string simMeshSolid[] = {"VocalFoldSolid3DFSI"};
+// //Ability to set multiple fluid meshes to simplify fluid mesh refinement studies
+// const std::string simMeshFluid[] = {"VF_Fluid_3D_FSI"};
+// const std::string meshPath = "meshes/";
+// const std::string paramsPath = "parameters.prm";
+// GridOut gridOut;
+// }
+
+// //only need to define dof_handler once for the sim dimensions, i guess this is how it reads what dim to use?
+// template <int dim>
+// Sim<dim>::Sim()
+// //error: no matching function for call to ‘dealii::parallel::distributed::Triangulation<2, 2>::Triangulation()
+//   : dof_handler(triaSolid) 
+// {}
+
+// //Solid object creation
+// template <int dim>
+// void Sim<dim>::loadSolid(std::string solidMeshName){
+//   // Dynamically define path for solid mesh location
+//   std::ifstream solidPath(meshPath + solidMeshName + ".msh");
+//   // Check if given mesh path is valid
+//   if (!solidPath){
+//     std::cerr << "----------------------------------------------------" << "\n"
+//               << "ERROR FINDING SOLID MESH FILE " << solidMeshName  << "\n"
+//               << "----------------------------------------------------" << "\n";
+//     //exit the program
+//     exit(0);
+//   }
+
+//   //define GridIn object to receive 2d mesh
+//   gridIn.attach_triangulation(triaSolid);
+//   //imports mesh from selected area
+//   gridIn.read_msh(solidPath);
+  
+//   return;
+// }
+
+// // Fluid object creation
+// template <int dim>
+// void Sim<dim>::loadFluid(std::string fluidMeshName){
+//   // Dynamically define path for fluid mesh location
+//   std::ifstream fluidPath(meshPath + fluidMeshName + ".msh");
+//   // Check if given mesh path is valid
+//   if (!fluidPath){
+//     std::cerr << "----------------------------------------------------" << "\n"
+//               << "ERROR FINDING FLUID MESH FILE " << fluidMeshName << "\n"
+//               << "----------------------------------------------------" << "\n";
+//     exit(0);
+//   }
+
+//   //define GridIn object to receive fluid mesh
+//   gridIn.attach_triangulation(triaFluid);
+//   //imports the fluid mesh from the valid file path
+//   gridIn.read_msh(fluidPath);
+
+//   return;
+//   //Example of exporting fluid mesh for debugging/checking what is used
+//   /*
+//   std::ofstream out(meshNameFluid + ".msh");
+//   gridOut.write_msh(triaFluid, out);
+//   */
+// }
+
+// template <int dim>
+// void Sim<dim>::setParams(Parameters::AllParameters params){
+//   //import params for both solid and fluid meshes separately
+//   //Solid::LinearElasticity<dim> solid(triaSolid, params);
+//   //Fluid::InsIM<dim> fluid(triaFluid, params);
+  
+//   if (params.simulation_type == "Solid"){
+//     Solid::MPI::SharedLinearElasticity<dim> solid(triaSolid, params);
+//     solid.run();
+//   }else if(params.simulation_type == "Fluid"){
+//     Fluid::MPI::InsIM<dim> fluid(triaFluid, params);
+//     fluid.run();
+//   }else if(params.simulation_type == "FSI"){
+//     //combine solid and fluid meshes to make FSI simulation
+//     Solid::MPI::SharedLinearElasticity<dim> solid(triaSolid, params);
+//     Fluid::MPI::InsIM<dim> fluid(triaFluid, params);
+//     MPI::FSI<dim> fsi(fluid, solid, params, true);
+//     fsi.run();
+//   }else{
+//     //error occured
+//     exit(0);
+//   }
+//   return;
+// }
+
+// int main(){
+//   //read parameters file to determine the dimensions present
+//   Parameters::AllParameters params(paramsPath);
+
+//   //iterate through each fluid mesh that was given
+//   for(const std::string &meshFluid : simMeshFluid){
+//     //iterate through each solid mesh
+//     for(const std::string &meshSolid : simMeshSolid){
+//       //This section has to be hard coded, since the creation of the Sim object requires a constant variable input
+//       //the value of ‘dims’ is not usable in a constant expression
+//       if (params.dimension == 2){
+//         Sim<2> sim;
+
+//         if(params.simulation_type == "Solid" || params.simulation_type == "FSI")
+//           sim.loadSolid(meshSolid);
+
+//         if (params.simulation_type == "Fluid" || params.simulation_type == "FSI")
+//           sim.loadFluid(meshFluid);
+
+//         //sim.loadMesh(meshSolid, meshFluid);
+//         sim.setParams(params);
+
+//       } else if (params.dimension == 3){
+//         Sim<3> sim;
+
+//         if(params.simulation_type == "Solid" || params.simulation_type == "FSI")
+//           sim.loadSolid(meshSolid);
+
+//         if (params.simulation_type == "Fluid" || params.simulation_type == "FSI")
+//           sim.loadFluid(meshFluid);
+        
+//         sim.setParams(params);
+        
+//       } else {
+//         std::cerr << "Cannot find dimension from parameters file" << std::endl
+//                   << "Check if " << paramsPath << "exists or has valid dimensions";
+//         exit(0);
+//       }
+
+//       //define path to current file location
+//       std::filesystem::path p = std::filesystem::current_path();
+      
+//       std::string outputFolder;
+//       if (params.simulation_type == "Solid"){
+//         outputFolder = meshSolid;
+//       }else if(params.simulation_type == "Fluid"){
+//         outputFolder = meshFluid;
+//       }else if(params.simulation_type == "FSI"){
+//         outputFolder = meshSolid + "_" + meshFluid;
+//       }  
+//       //TODO change meshFluid call to a new output file name
+//       //create folder with a title corresponding to the current fluid mesh name
+//       std::filesystem::create_directory(p / outputFolder);
+
+//       //iterate through each file in the main directory
+//       for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
+//         //checks if each file is a .vtu or .pvd file
+//         //since these are main outputs for each test case, want to move them somewhere safe before starting another simulation
+//         if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd"){
+          
+//           //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
+//           std::filesystem::rename(p / dirEntry.path().filename(), p / outputFolder / dirEntry.path().filename());
+//         }
+//       }
+//     }
+//   }
+// }
