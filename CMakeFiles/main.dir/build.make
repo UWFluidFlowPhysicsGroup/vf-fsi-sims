@@ -116,6 +116,8 @@ main: /usr/lib/x86_64-linux-gnu/libhwloc.so
 main: /usr/lib/x86_64-linux-gnu/libevent_core.so
 main: /usr/lib/x86_64-linux-gnu/libevent_pthreads.so
 main: /usr/lib/x86_64-linux-gnu/libz.so
+main: ../p4est_build/local/lib/libp4est.so
+main: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so
 main: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
 main: CMakeFiles/main.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/nhewko/VocalFolds/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable main"

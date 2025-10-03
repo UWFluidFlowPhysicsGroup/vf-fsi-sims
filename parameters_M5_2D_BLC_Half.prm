@@ -24,7 +24,7 @@ subsection Simulation
   set Time step size = 1.25e-5
 
   # The output interval frequency
-  set Output interval = 2.5e-5
+  set Output interval = 2.5e-4
 
   # Mesh refinement interval in second
   set Refinement interval = 1e10
@@ -55,7 +55,7 @@ end
 
 subsection Fluid material properties
   # The dynamic viscosity
-  set Dynamic viscosity = 18.e-5
+  set Dynamic viscosity = 1.8e-5
 
   # Fluid density
   set Fluid density = 1.2e-3
@@ -153,7 +153,7 @@ subsection Solid material properties
   # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
   #set Shear modulus = 12e3, 40e3, 40e3
 
-  set Viscosity = 0, 0, 0
+  set Viscosity = 0.018, 0.018, 0.018
 
   # A list of parameters used by hyperelasticMaterial
   set Hyperelastic parameters = 0.5, 1.67, 0.5, 1.67, 0.5, 1.67
@@ -171,6 +171,10 @@ subsection Solid solver control
 
   # Force residual tolerance (relative to the first iteration at each timestep)
   set Force tolerance  = 1.0e-6
+
+  # Multiplier of the penetration distance to compute contact force.
+  set Contact force multiplier = 1e10
+
 end
 
 # Only homogeneous Dirichlet BC is supported, i.e., the prescribed value is always 0.
@@ -204,5 +208,5 @@ subsection Solid Neumann BCs
   # If traction, dim*n_solid_neumann_bcs components are expected;
   # if pressure, n_solid_neumann_bcs components are expected. (dyne cm^-2) -> (0.1Pa)
   # traction sets values in x, y, z directions, pressure sets normal to original face direction
-  set Neumann boundary values = 0, 1e3
+  set Neumann boundary values = 0, 0
 end

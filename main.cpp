@@ -74,6 +74,8 @@ int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
   const std::string simMeshSolid[] = {"VF_M5_BLCE_2D_Half"};
   const std::string simMeshFluid[] = {"VF_Fluid_FSI_2D_Half"};
+  // const std::string simMeshSolid[] = {"SquareMeshDualMat"};
+  // const std::string simMeshFluid[] = {""};
   const std::string meshPath = "meshes/";
   const std::string paramsPath = "parameters_M5_2D_BLC_Half.prm";
   //read parameters file to determine the dimensions present
@@ -138,10 +140,10 @@ int main(int argc, char *argv[]){
             //combine solid and fluid meshes to make FSI simulation
             Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
             Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
-
+            
             // Define penetration criterion, incompressible plane along mid plane
             auto penetration_criterion = [](const Point<2> &p) -> double {
-              double midplane = 16.85/2;
+              double midplane = (1.69-0.005)/2;
               return (p[0] - midplane);
             };
 
