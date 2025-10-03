@@ -77,9 +77,17 @@ DEAL_II_INVOKE_AUTOPILOT()
 # these 2 lines are very important in getting OpenIFEM to work properly
 # targets header files in the include folder
 target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../OpenIFEM/OpenIFEM-source/OpenIFEM/include)
+<<<<<<< HEAD
 # black magic, not sure what it does but found in tests CMakeLists, still builds without
 # deal_ii_setup_target(${TARGET})
 # targets libopenifem.so file file from build and imports std::experimental::filesystem
+=======
+#target_include_directories(${TARGET} PUBLIC "/home/nhewko/OpenIFEM/OpenIFEM-source/OpenIFEM/include")
+# black magic, not sure what it does but found in tests CMakeLists, still builds without
+# deal_ii_setup_target(${TARGET})
+# targets libopenifem.so file file from build and imports std::experimental::filesystem
+#target_link_libraries(${TARGET} "/home/nhewko/OpenIFEM/OpenIFEM-build/lib/libopenifem.so" stdc++fs)
+>>>>>>> refs/remotes/origin/mpitesting
 target_link_libraries(${TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/../OpenIFEM/OpenIFEM-build/lib/libopenifem.so stdc++fs)
 
 # use step 7 here
@@ -91,7 +99,7 @@ include_directories(${MPI_INCLUDE_PATH})
 target_link_libraries(${TARGET} ${MPI_LIBRARIES})
 
 target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../p4est_build/local/include)
-target_link_libraries(${TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/../p4est_build/local/lib/libp4est.so)
+target_link_libraries(${TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/../p4est_build/local/lib/libp4est.so stdc++fs)
 # target_include_directories(${TARGET} PUBLIC "/home/nhewko/p4est_build/local/include")
 # target_link_libraries(${TARGET} "/home/nhewko/p4est_build/local/lib/libp4est.so" stdc++fs)
 
