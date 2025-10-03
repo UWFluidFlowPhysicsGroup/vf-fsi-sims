@@ -93,7 +93,7 @@ main_EXTERNAL_OBJECTS =
 main: CMakeFiles/main.dir/main.cpp.o
 main: CMakeFiles/main.dir/build.make
 main: /home/nhewko/OpenIFEM-dependencies/build_dealii/lib/libdeal_II.so.9.4.1
-main: /home/nhewko/OpenIFEM/OpenIFEM-build/lib/libopenifem.so
+main: ../OpenIFEM/OpenIFEM-build/lib/libopenifem.so
 main: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so
 main: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
 main: ../p4est_build/local/lib/libp4est.so

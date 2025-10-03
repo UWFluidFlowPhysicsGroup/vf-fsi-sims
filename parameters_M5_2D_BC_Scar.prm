@@ -18,19 +18,19 @@ subsection Simulation
   set Global refinements = 0, 0
 
   # The end time of the simulation in second
-  set End time = 5e-1
+  set End time = 5e-2
 
   # The time step in second
-  set Time step size = 5e-6
+  set Time step size = 2.5e-5
 
   # The output interval frequency
-  set Output interval = 1e-3
+  set Output interval = 2.5e-5
 
   # Mesh refinement interval in second
-  set Refinement interval = 1e6
+  set Refinement interval = 1e10
 
   # Checkpoint save interval in second
-  set Save interval = 1e4
+  set Save interval = 1e10
 
   # Body force which applies to both fluid and solid (acceleration) (cm s^-2) -> (m s^-2 * 100)
   set Gravity = 0.0, 0.0
@@ -130,7 +130,7 @@ subsection Solid material properties
 
   # Isotropic material properties (Pa)
   # E and nu are only used by Isotropic LinearElastic materials
-  set Young's modulus = 25e3, 4e3, 12e3
+  set Young's modulus = 25e3, 4e3, 4.7e3
 
   set Poisson's ratio = 0.49, 0.49, 0.49
 
