@@ -21,7 +21,7 @@ subsection Simulation
   set End time = 1e0
 
   # The time step in second
-  set Time step size = 1e-2
+  set Time step size = 1e-3
 
   # The output interval frequency
   set Output interval = 1e-2
@@ -122,8 +122,8 @@ subsection Solid material properties
   # Number of different materials used in solid
   set Number of solid parts = 2
 
-  # Material Type, only Isotropic and PlanarIsotropic for linearelastic materials for now
-  set Material type = PlanarIsotropic, PlanarIsotropic
+  # # Material Type, only Isotropic and PlanarIsotropic for linearelastic materials for now
+  # set Material type = PlanarIsotropic, PlanarIsotropic
 
   # Solid density (g/cm^3), used by all solid solvers
   set Solid density = 1
@@ -134,24 +134,24 @@ subsection Solid material properties
 
   set Poisson's ratio = 0.25, 0.25
 
-  # Anisotropic material properties
-  # Initial fiber direction for non isotropic materials only. Expecting number of materials * dim values
-  set Initial fiber direction = 0, 1, 0, 1
+  # # Anisotropic material properties
+  # # Initial fiber direction for non isotropic materials only. Expecting number of materials * dim values
+  # set Initial fiber direction = 0, 1, 0, 1
 
-  # Young's modulus (Pa) in fiber direction, only used for transverse isotropic materials
-  set Young's modulus 1 = 10e3, 1e3
+  # # Young's modulus (Pa) in fiber direction, only used for transverse isotropic materials
+  # set Young's modulus 1 = 10e3, 1e3
 
-  # Young's modulus (Pa) pependicular to fiber direction, only used for transverse isotropic materials
-  set Young's modulus 2 = 10e3, 1e3
+  # # Young's modulus (Pa) pependicular to fiber direction, only used for transverse isotropic materials
+  # set Young's modulus 2 = 10e3, 1e3
 
-  # Poisson's ratio involving fiber direction, only used for transverse isotropic materials
-  set Poisson's ratio 12 = 0.1, 0.1
+  # # Poisson's ratio involving fiber direction, only used for transverse isotropic materials
+  # set Poisson's ratio 12 = 0.1, 0.1
 
-  # Poisson's ratio in plane of isotropy, only used for transverse isotropic materials
-  set Poisson's ratio 23 = 0.1, 0.1
+  # # Poisson's ratio in plane of isotropy, only used for transverse isotropic materials
+  # set Poisson's ratio 23 = 0.1, 0.1
 
-  # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
-  set Shear modulus = 1e3, 1e3
+  # # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
+  # set Shear modulus = 1e3, 1e3
 
 
   set Viscosity = 0, 0
@@ -162,7 +162,7 @@ end
 
 subsection Solid solver control
   # Artifitial damping. (dyne cm^-1) (10^-3 N m^-1)
-  set Damping = 0.0
+  set Damping = 0.1
 
   # Number of Newton-Raphson iterations allowed, used by hyperelastic solver only
   set Max Newton iterations = 10

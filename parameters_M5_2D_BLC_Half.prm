@@ -15,22 +15,22 @@ subsection Simulation
 
   # Level of global refinement before running,
   # which applies to all the solvers
-  set Global refinements = 0, 0 
+  set Global refinements = 0, 0
 
   # The end time of the simulation in second
-  set End time = 1e-1
+  set End time = 5e-2
 
   # The time step in second
-  set Time step size = 2e-6
+  set Time step size = 1.25e-5
 
   # The output interval frequency
-  set Output interval = 1e-4
+  set Output interval = 2.5e-4
 
   # Mesh refinement interval in second
-  set Refinement interval = 1e6
+  set Refinement interval = 1e10
 
   # Checkpoint save interval in second
-  set Save interval = 1e6
+  set Save interval = 1e10
 
   # Body force which applies to both fluid and solid (acceleration) (cm s^-2) -> (m s^-2 * 100)
   set Gravity = 0.0, 0.0
@@ -55,7 +55,7 @@ end
 
 subsection Fluid material properties
   # The dynamic viscosity
-  set Dynamic viscosity = 18.0e-5
+  set Dynamic viscosity = 1.8e-5
 
   # Fluid density
   set Fluid density = 1.2e-3
@@ -80,20 +80,20 @@ subsection Fluid Dirichlet BCs
   set Use hard-coded boundary values = 0
 
   # Number of boundaries with Dirichlet BCs
-  set Number of Dirichlet BCs = 1
+  set Number of Dirichlet BCs = 2
 
   # List all the boundaries with Dirichlet BCs
-  set Dirichlet boundary id = 12
+  set Dirichlet boundary id = 12, 13
 
   # List the constrained components of these boundaries
   # One decimal number indicates one set of constrained components:
   # 1-x, 2-y, 3-xy, 4-z, 5-xz, 6-yz, 7-xyz
   # To make sense of the numbering, convert decimals to binaries (zyx)
-  set Dirichlet boundary components = 3
+  set Dirichlet boundary components = 3, 1
 
   # Specify the values of the Dirichlet BCs, including both homogeneous and
   # inhomogeneous ones. (cm s^-1)
-  set Dirichlet boundary values = 0, 0
+  set Dirichlet boundary values = 0, 0, 0
 end
 
 subsection Fluid Neumann BCs
@@ -105,7 +105,7 @@ subsection Fluid Neumann BCs
   set Neumann boundary id = 10, 11
 
   #Specify the values of the pressure of the Neumann BCs
-  set Neumann boundary values = 900, 0
+  set Neumann boundary values = 600, 0
 end
 
 # --------------------------------------------------------------------------------
@@ -120,43 +120,43 @@ subsection Solid material properties
   set Solid type = LinearElastic
   
   # Number of different materials used in solid
-  set Number of solid parts = 2
+  set Number of solid parts = 3
 
   # Material Type, only Isotropic and PlanarIsotropic for linearelastic materials for now
-  set Material type = Isotropic, Isotropic
+  #set Material type = Isotropic, Isotropic, Isotropic
 
   # Solid density (g/cm^3), used by all solid solvers
   set Solid density = 1.07
 
   # Isotropic material properties (Pa)
   # E and nu are only used by Isotropic LinearElastic materials
-  set Young's modulus = 25e3, 5e3
+  set Young's modulus = 25e3, 4e3, 2e3
 
-  set Poisson's ratio = 0.49, 0.49
+  set Poisson's ratio = 0.49, 0.49, 0.49
 
   # Anisotropic material properties
   # Initial fiber direction for non isotropic materials only. Expecting number of materials * dim values
-  set Initial fiber direction = 0, 1, 0, 1
+  #set Initial fiber direction = 0, 1, 0, 1, 0, 1
 
   # Young's modulus (Pa) in fiber direction, only used for transverse isotropic materials
-  set Young's modulus 1 = 39900e3, 33060e3
+  #set Young's modulus 1 = 39900e3, 33060e3, 33060e3
 
   # Young's modulus (Pa) pependicular to fiber direction, only used for transverse isotropic materials
-  set Young's modulus 2 = 4e3, 3.3e3
+  #set Young's modulus 2 = 4e3, 3.3e3, 3.3e3
 
   # Poisson's ratio involving fiber direction, only used for transverse isotropic materials
-  set Poisson's ratio 12 = 0, 0
+  #set Poisson's ratio 12 = 0, 0, 0
 
   # Poisson's ratio in plane of isotropy, only used for transverse isotropic materials
-  set Poisson's ratio 23 = 0.9, 0.9
+  #set Poisson's ratio 23 = 0.9, 0.9, 0.9
 
   # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
-  set Shear modulus = 12e3, 40e3
+  #set Shear modulus = 12e3, 40e3, 40e3
 
-  set Viscosity = 0, 0
+  set Viscosity = 0.018, 0.018, 0.018
 
   # A list of parameters used by hyperelasticMaterial
-  set Hyperelastic parameters = 0.5, 1.67, 0.5, 1.67
+  set Hyperelastic parameters = 0.5, 1.67, 0.5, 1.67, 0.5, 1.67
 end
 
 subsection Solid solver control
@@ -171,6 +171,10 @@ subsection Solid solver control
 
   # Force residual tolerance (relative to the first iteration at each timestep)
   set Force tolerance  = 1.0e-6
+
+  # Multiplier of the penetration distance to compute contact force.
+  set Contact force multiplier = 1e10
+
 end
 
 # Only homogeneous Dirichlet BC is supported, i.e., the prescribed value is always 0.
@@ -204,5 +208,5 @@ subsection Solid Neumann BCs
   # If traction, dim*n_solid_neumann_bcs components are expected;
   # if pressure, n_solid_neumann_bcs components are expected. (dyne cm^-2) -> (0.1Pa)
   # traction sets values in x, y, z directions, pressure sets normal to original face direction
-  set Neumann boundary values = 0, 1e3
+  set Neumann boundary values = 0, 0
 end
