@@ -77,7 +77,7 @@ DEAL_II_INVOKE_AUTOPILOT()
 # these 2 lines are very important in getting OpenIFEM to work properly
 # targets header files in the include folder
 target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../OpenIFEM/OpenIFEM-source/OpenIFEM/include)
-#target_include_directories(${TARGET} PUBLIC "/home/nhewko/OpenIFEM/OpenIFEM-source/OpenIFEM/include")
+
 # black magic, not sure what it does but found in tests CMakeLists, still builds without
 # deal_ii_setup_target(${TARGET})
 # targets libopenifem.so file file from build and imports std::experimental::filesystem
