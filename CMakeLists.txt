@@ -17,8 +17,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.5.0)
 
 #find deal.II package, mostly imported from examples
 #deal.II_DIR is at /home/nhewko/local/lib/cmake/deal.II
+
+# Might need to change hints for server simulations,
+# server dealii found at $EBROOTDEALII
 find_package(deal.II ${DEAL_II_VERSION_REQUIRED}
-    HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
+    # HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../../../ $ENV{DEAL_II_DIR}
 )
 
 IF(NOT ${deal.II_FOUND})
@@ -78,7 +81,6 @@ DEAL_II_INVOKE_AUTOPILOT()
 # targets header files in the include folder
 target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../OpenIFEM/OpenIFEM-source/OpenIFEM/include)
 
-# black magic, not sure what it does but found in tests CMakeLists, still builds without
 # deal_ii_setup_target(${TARGET})
 # targets libopenifem.so file file from build and imports std::experimental::filesystem
 #target_link_libraries(${TARGET} "/home/nhewko/OpenIFEM/OpenIFEM-build/lib/libopenifem.so" stdc++fs)

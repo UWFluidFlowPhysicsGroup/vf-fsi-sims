@@ -72,8 +72,8 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"VF_M5_BLCE_2D_Half"};
-  const std::string simMeshFluid[] = {"VF_Fluid_FSI_2D_Half"};
+  const std::string simMeshSolid[] = {"VF_M5_BLC_Half"};
+  const std::string simMeshFluid[] = {"VF_Fluid_Half"};
   // const std::string simMeshSolid[] = {"SquareMeshDualMat"};
   // const std::string simMeshFluid[] = {""};
   const std::string meshPath = "meshes/";
@@ -143,15 +143,15 @@ int main(int argc, char *argv[]){
             
             // Define penetration criterion, incompressible plane along mid plane
             auto penetration_criterion = [](const Point<2> &p) -> double {
-              double midplane = (1.69-0.005)/2;
-              return (p[0] - midplane);
+              double midplane = (1.69-0.025)/2;
+              return (p[1] - midplane);
             };
 
             MPI::FSI<2> fsi(fluid, solid, params, true);
             
             //apply penetration criterion to simulation, can only set one penetration criterion for the whole model
             fsi.set_penetration_criterion(penetration_criterion,
-                                        Tensor<1, 2>({-1, 0}));
+                                        Tensor<1, 2>({0, -1}));
 
             fsi.run();
           }else{
