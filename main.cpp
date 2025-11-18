@@ -143,7 +143,7 @@ int main(int argc, char *argv[]){
             
             // Define penetration criterion, incompressible plane along mid plane
             auto penetration_criterion = [](const Point<2> &p) -> double {
-              double midplane = (1.69-0.025)/2;
+              double midplane = (1.69-0.005)/2;
               return (p[1] - midplane);
             };
 

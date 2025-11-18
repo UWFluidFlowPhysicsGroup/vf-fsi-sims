@@ -21,10 +21,10 @@ subsection Simulation
   set End time = 1e-1
 
   # The time step in second
-  set Time step size = 1.25e-5
+  set Time step size = 1.25e-6
 
   # The output interval frequency
-  set Output interval = 2.5e-4
+  set Output interval = 5e-4
 
   # Mesh refinement interval in second
   set Refinement interval = 1e10
