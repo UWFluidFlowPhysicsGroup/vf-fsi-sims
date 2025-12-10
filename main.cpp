@@ -72,12 +72,12 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"VF_M5_BLC_Half"};
-  const std::string simMeshFluid[] = {"VF_Fluid_Half"};
+  const std::string simMeshSolid[] = {"DualCollisionSolid"};
+  const std::string simMeshFluid[] = {"DualCollisionFluid"};
   // const std::string simMeshSolid[] = {"SquareMeshDualMat"};
   // const std::string simMeshFluid[] = {""};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters_M5_2D_BLC_Half.prm";
+  const std::string paramsPath = "parameters.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
@@ -142,16 +142,45 @@ int main(int argc, char *argv[]){
             Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
             
             // Define penetration criterion, incompressible plane along mid plane
-            auto penetration_criterion = [](const Point<2> &p) -> double {
-              double midplane = (1.69-0.005)/2;
-              return (p[1] - midplane);
+            auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
+              // double midplane = (1.69-0.005)/2;
+              // double gap = 0.005;
+              double midplane = 0;
+              double gap = 0.02;
+              // Check if point is between min and max collision zone
+              if ((p[1] >  (midplane - gap/2)) && (p[1] < (midplane + gap/2))){
+                if (disp[1] < 0){
+                  return (midplane + gap/2 - p[1]);
+                }else if(disp[1] > 0){
+                  return (p[1] - (midplane-gap/2));
+                }
+              }
+              //return value of 0 if no collision or if disp[1] = 0
+              return (0);
+            };
+
+            // keeping vertex point data for futureproofing mpi_fsi class, could also overload function instead
+            auto penetration_direction = [](const Point<2> &p, const Point<2> &disp) -> Tensor<1, 2> {
+              // resulting direction is based only on displacement
+              // if (disp[1] < 0){
+              //   // negative y displacement (downwards) results in pointing upwards
+              //   return (Tensor<1,2>({0,1}));
+              // }else if(disp[1] > 0){
+              //   // positive y displacement (upwards) results in pointing downwards
+              //   return (Tensor<1,2>({0,-1}));
+              // }else{
+              //   return (Tensor<1,2>({0,1}));
+              // }
+              // This could work instead? Would just create vector in opposite direction of y displacement
+              // need to return as normal, double check that mpi_fsi takes norm?
+              return (Tensor<1,2>({0,-disp[1]}));
             };
 
             MPI::FSI<2> fsi(fluid, solid, params, true);
             
             //apply penetration criterion to simulation, can only set one penetration criterion for the whole model
-            fsi.set_penetration_criterion(penetration_criterion,
-                                        Tensor<1, 2>({0, -1}));
+            fsi.set_penetration_criterion(penetration_criterion);
+            fsi.set_penetration_direction(penetration_direction);
 
             fsi.run();
           }else{

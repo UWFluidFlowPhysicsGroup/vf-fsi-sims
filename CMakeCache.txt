@@ -53,7 +53,7 @@ CMAKE_CXX_FLAGS_RELEASE:STRING=
 CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
 //C compiler
-CMAKE_C_COMPILER:FILEPATH=/usr/bin/cc
+CMAKE_C_COMPILER:STRING=/usr/bin/cc
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -390,7 +390,7 @@ PERL_EXECUTABLE:FILEPATH=/usr/bin/perl
 PKG_CONFIG_ARGN:STRING=
 
 //pkg-config executable
-PKG_CONFIG_EXECUTABLE:FILEPATH=PKG_CONFIG_EXECUTABLE-NOTFOUND
+PKG_CONFIG_EXECUTABLE:FILEPATH=/mnt/c/Strawberry/perl/bin/pkg-config
 
 //The directory containing a CMake configuration file for deal.II.
 deal.II_DIR:PATH=/home/nhewko/OpenIFEM-dependencies/build_dealii/lib/cmake/deal.II
