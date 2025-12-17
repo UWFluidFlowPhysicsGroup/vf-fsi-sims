@@ -134,26 +134,26 @@ subsection Solid material properties
 
   set Poisson's ratio = 0.49, 0.49, 0.49
 
-  # Anisotropic material properties
-  # Initial fiber direction for non isotropic materials only. Expecting number of materials * dim values
-  set Initial fiber direction = 0, 1, 0, 1, 0, 1
+  # # Anisotropic material properties
+  # # Initial fiber direction for non isotropic materials only. Expecting number of materials * dim values
+  # set Initial fiber direction = 0, 1, 0, 1, 0, 1
 
-  # Young's modulus (Pa) in fiber direction, only used for transverse isotropic materials
-  set Young's modulus 1 = 39900e3, 33060e3, 33060e3
+  # # Young's modulus (Pa) in fiber direction, only used for transverse isotropic materials
+  # set Young's modulus 1 = 39900e3, 33060e3, 33060e3
 
-  # Young's modulus (Pa) pependicular to fiber direction, only used for transverse isotropic materials
-  set Young's modulus 2 = 4e3, 3.3e3, 3.3e3
+  # # Young's modulus (Pa) pependicular to fiber direction, only used for transverse isotropic materials
+  # set Young's modulus 2 = 4e3, 3.3e3, 3.3e3
 
-  # Poisson's ratio involving fiber direction, only used for transverse isotropic materials
-  set Poisson's ratio 12 = 0, 0, 0
+  # # Poisson's ratio involving fiber direction, only used for transverse isotropic materials
+  # set Poisson's ratio 12 = 0, 0, 0
 
-  # Poisson's ratio in plane of isotropy, only used for transverse isotropic materials
-  set Poisson's ratio 23 = 0.9, 0.9, 0.9
+  # # Poisson's ratio in plane of isotropy, only used for transverse isotropic materials
+  # set Poisson's ratio 23 = 0.9, 0.9, 0.9
 
-  # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
-  set Shear modulus = 12e3, 40e3, 40e3
+  # # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
+  # set Shear modulus = 12e3, 40e3, 40e3
 
-  set Viscosity = 0, 0, 0
+  # set Viscosity = 0, 0, 0
 
   # A list of parameters used by hyperelasticMaterial
   set Hyperelastic parameters = 0.5, 1.67, 0.5, 1.67, 0.5, 1.67
@@ -171,6 +171,9 @@ subsection Solid solver control
 
   # Force residual tolerance (relative to the first iteration at each timestep)
   set Force tolerance  = 1.0e-6
+
+  # Multiplier of the penetration distance to compute contact force.
+  set Contact force multiplier = 5e4
 end
 
 # Only homogeneous Dirichlet BC is supported, i.e., the prescribed value is always 0.
@@ -204,5 +207,5 @@ subsection Solid Neumann BCs
   # If traction, dim*n_solid_neumann_bcs components are expected;
   # if pressure, n_solid_neumann_bcs components are expected. (dyne cm^-2) -> (0.1Pa)
   # traction sets values in x, y, z directions, pressure sets normal to original face direction
-  set Neumann boundary values = 0, 1e3
+  set Neumann boundary values = 0, 0
 end
