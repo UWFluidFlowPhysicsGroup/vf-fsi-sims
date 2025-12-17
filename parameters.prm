@@ -21,10 +21,10 @@ subsection Simulation
   set End time = 1e0
 
   # The time step in second
-  set Time step size = 1e-4
+  set Time step size = 2e-4
 
   # The output interval frequency
-  set Output interval = 1e-4
+  set Output interval = 2e-4
 
   # Mesh refinement interval in second
   set Refinement interval = 1e6
@@ -80,32 +80,35 @@ subsection Fluid Dirichlet BCs
   set Use hard-coded boundary values = 0
 
   # Number of boundaries with Dirichlet BCs
-  set Number of Dirichlet BCs = 3
+  set Number of Dirichlet BCs = 1
 
   # List all the boundaries with Dirichlet BCs
-  set Dirichlet boundary id = 10, 11, 12
+  set Dirichlet boundary id = 12
 
   # List the constrained components of these boundaries
   # One decimal number indicates one set of constrained components:
   # 1-x, 2-y, 3-xy, 4-z, 5-xz, 6-yz, 7-xyz
   # To make sense of the numbering, convert decimals to binaries (zyx)
-  set Dirichlet boundary components = 2, 2, 3
+  set Dirichlet boundary components = 3
 
   # Specify the values of the Dirichlet BCs, including both homogeneous and
   # inhomogeneous ones. (cm s^-1)
-  set Dirichlet boundary values = -0.1, 0.1, 0, 0
+  set Dirichlet boundary values = 0, 0
 end
 
 subsection Fluid Neumann BCs
   # Number of boundaries with Neumann BCs (specifically, pressure BC)
   # Note: do-nothing (zero pressure) boundary do not need to be explicitly specified!)
-  set Number of Neumann BCs = 1
+  set Number of Neumann BCs = 3
+  # set Number of Neumann BCs = 2
 
   # List all the boundaries with Neumann BCs
-  set Neumann boundary id = 13
+  set Neumann boundary id =  10, 11, 13
+  # set Neumann boundary id =  10, 13
 
   #Specify the values of the pressure of the Neumann BCs
-  set Neumann boundary values = 0
+  set Neumann boundary values = 50, 50, 0
+  # set Neumann boundary values = 100, 0
 end
 
 # --------------------------------------------------------------------------------
@@ -129,7 +132,7 @@ subsection Solid material properties
   # E and nu are only used by Isotropic LinearElastic materials
   set Young's modulus = 10e3
 
-  set Poisson's ratio = 0.25
+  set Poisson's ratio = 0
 
   # # Anisotropic material properties
   # # Initial fiber direction for non isotropic materials only. Expecting number of materials * dim values
@@ -166,6 +169,9 @@ subsection Solid solver control
 
   # Force residual tolerance (relative to the first iteration at each timestep)
   set Force tolerance  = 1.0e-6
+
+  # Multiplier of the penetration distance to compute contact force.
+  set Contact force multiplier = 5e4
 end
 
 # Only homogeneous Dirichlet BC is supported, i.e., the prescribed value is always 0.
