@@ -18,7 +18,7 @@ subsection Simulation
   set Global refinements = 0, 0
 
   # The end time of the simulation in second
-  set End time = 2e0
+  set End time = 1e0
 
   # The time step in second
   set Time step size = 1e-2
@@ -120,14 +120,14 @@ subsection Solid material properties
   set Solid type = LinearElastic
   
   # Material Type, only Isotropic and PlanarIsotropic for linearelastic materials for now
-  set Material type = PlanarIsotropic
+  set Material type = Isotropic
 
   # Solid density (g/cm^3), used by all solid solvers
   set Solid density = 1.0
 
   # Isotropic material properties (Pa)
   # E and nu are only used by Isotropic LinearElastic materials
-  set Young's modulus = 70e9
+  set Young's modulus = 1e9
 
   set Poisson's ratio = 0.25
 
@@ -136,24 +136,19 @@ subsection Solid material properties
   set Initial fiber direction = 1, 0
 
   # Young's modulus (Pa) in fiber direction, only used for transverse isotropic materials
-  set Young's modulus 1 = 131e9
-  # 30e3
+  set Young's modulus 1 = 1e9
 
   # Young's modulus (Pa) pependicular to fiber direction, only used for transverse isotropic materials
-  set Young's modulus 2 = 10.3e9
-  # 1e3
+  set Young's modulus 2 = 1e9
 
   # Poisson's ratio involving fiber direction, only used for transverse isotropic materials
-  set Poisson's ratio 12 = 0.22
-  # 0.57
+  set Poisson's ratio 12 = 0.1
 
   # Poisson's ratio in plane of isotropy, only used for transverse isotropic materials
-  set Poisson's ratio 23 = 0.3
-  # 0.57
+  set Poisson's ratio 23 = 0.1
 
   # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
-  set Shear modulus = 6.9e9
-  # 13.9e3
+  set Shear modulus = 1e9
 
   # A list of parameters used by hyperelasticMaterial
   set Hyperelastic parameters = 0.5, 1.67
@@ -202,7 +197,7 @@ subsection Solid Neumann BCs
   set Neumann boundary type = Traction
 
   # If traction, dim*n_solid_neumann_bcs components are expected;
-  # if pressure, n_solid_neumann_bcs components are expected. (dyne cm^-2) -> (0.1Pa)
+  # if pressure, n_solid_neumann_bcs components are expected. (Pa)
   # traction sets values in x, y, z directions, pressure sets normal to original face direction
   set Neumann boundary values = 0, 0
 end
