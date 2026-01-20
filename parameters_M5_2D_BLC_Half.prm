@@ -57,8 +57,8 @@ subsection Fluid material properties
   # The dynamic viscosity
   set Dynamic viscosity = 1.8e-5
 
-  # Fluid density
-  set Fluid density = 1.2e-3
+  # Fluid density (g/mm^3)
+  set Fluid density = 1.2
 end
 
 subsection Fluid solver control
@@ -125,10 +125,10 @@ subsection Solid material properties
   # Material Type, only Isotropic and PlanarIsotropic for linearelastic materials for now
   #set Material type = Isotropic, Isotropic, Isotropic
 
-  # Solid density (g/cm^3), used by all solid solvers
-  set Solid density = 1.07
+  # Solid density (g/mm^3), used by all solid solvers
+  set Solid density = 1.07e-3
 
-  # Isotropic material properties (Pa)
+  # Isotropic material properties (Pa -> kg/(s^2*m))
   # E and nu are only used by Isotropic LinearElastic materials
   set Young's modulus = 25e3, 4e3, 2e3
 
@@ -161,7 +161,7 @@ end
 
 subsection Solid solver control
   # Artifitial damping. (dyne cm^-1) (10^-3 N m^-1)
-  set Damping = 0.05
+  set Damping = 0
 
   # Number of Newton-Raphson iterations allowed, used by hyperelastic solver only
   set Max Newton iterations = 10
@@ -206,7 +206,7 @@ subsection Solid Neumann BCs
   set Neumann boundary type = Traction
 
   # If traction, dim*n_solid_neumann_bcs components are expected;
-  # if pressure, n_solid_neumann_bcs components are expected. (dyne cm^-2) -> (0.1Pa)
+  # if pressure, n_solid_neumann_bcs components are expected. (Pa)
   # traction sets values in x, y, z directions, pressure sets normal to original face direction
   set Neumann boundary values = 0, 0
 end
