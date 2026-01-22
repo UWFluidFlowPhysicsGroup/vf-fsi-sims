@@ -18,19 +18,19 @@ subsection Simulation
   set Global refinements = 0, 0
 
   # The end time of the simulation in second
-  set End time = 5e-2
+  set End time = 1e-1
 
   # The time step in second
-  set Time step size = 1.25e-5
+  set Time step size = 1e-6
 
   # The output interval frequency
-  set Output interval = 2.5e-5
+  set Output interval = 1.25e-4
 
   # Mesh refinement interval in second
   set Refinement interval = 1e10
 
   # Checkpoint save interval in second
-  set Save interval = 1e10
+  set Save interval = 1e-4
 
   # Body force which applies to both fluid and solid (acceleration) (cm s^-2) -> (m s^-2 * 100)
   set Gravity = 0.0, 0.0
@@ -58,7 +58,7 @@ subsection Fluid material properties
   set Dynamic viscosity = 18.e-5
 
   # Fluid density
-  set Fluid density = 1.2e-3
+  set Fluid density = 1.2e-6
 end
 
 subsection Fluid solver control
@@ -126,7 +126,7 @@ subsection Solid material properties
   set Material type = Isotropic, Isotropic, Isotropic
 
   # Solid density (g/cm^3), used by all solid solvers
-  set Solid density = 1.07
+  set Solid density = 1.07e-3
 
   # Isotropic material properties (Pa)
   # E and nu are only used by Isotropic LinearElastic materials
