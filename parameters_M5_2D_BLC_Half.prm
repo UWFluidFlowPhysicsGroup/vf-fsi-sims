@@ -21,16 +21,16 @@ subsection Simulation
   set End time = 1e-1
 
   # The time step in second
-  set Time step size = 1.25e-6
+  set Time step size = 1e-6
 
   # The output interval frequency
-  set Output interval = 5e-4
+  set Output interval = 1.25e-4
 
   # Mesh refinement interval in second
   set Refinement interval = 1e10
 
   # Checkpoint save interval in second
-  set Save interval = 1e-3
+  set Save interval = 1e-4
 
   # Body force which applies to both fluid and solid (acceleration) (cm s^-2) -> (m s^-2 * 100)
   set Gravity = 0.0, 0.0
@@ -58,7 +58,7 @@ subsection Fluid material properties
   set Dynamic viscosity = 1.8e-5
 
   # Fluid density (g/mm^3)
-  set Fluid density = 1.2
+  set Fluid density = 1.2e-6
 end
 
 subsection Fluid solver control
