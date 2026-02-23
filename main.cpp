@@ -140,9 +140,23 @@ int main(int argc, char *argv[]){
             Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
             
             // Define penetration criterion, incompressible plane along mid plane
-            auto penetration_criterion = [](const Point<2> &p) -> double {
-              double H = 16.9, gap = 0.05;
-              return (p[1] - (H-gap)/2);
+            auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
+              double midplane = 0;
+              double gap = 3.795;
+              // Check if point is between min and max collision zone
+              if ((p[1] >  (midplane - gap/2)) && (p[1] < (midplane + gap/2))){
+                if (disp[1] < 0){
+                  return (midplane + gap/2 - p[1]);
+                }else{
+                  return (p[1] - (midplane-gap/2));
+                }
+              }
+              return (0);
+            };
+
+            // keeping vertex point data for futureproofing mpi_fsi class, could also overload function instead
+            auto penetration_direction = [](const Point<2> &p, const Point<2> &disp) -> Tensor<1, 2> {
+              return (Tensor<1,2>({0,-disp[1]}));
             };
 
             double PMLlength = 90, SigmaMax = 340000;
@@ -166,8 +180,8 @@ int main(int argc, char *argv[]){
             MPI::FSI<2> fsi(fluid, solid, params, true);
             
             //apply penetration criterion to simulation, can only set one penetration criterion for the whole model
-            fsi.set_penetration_criterion(penetration_criterion,
-                                        Tensor<1, 2>({0, -1}));
+            fsi.set_penetration_criterion(penetration_criterion);
+            fsi.set_penetration_direction(penetration_direction);
 
             fsi.run();
           }else{
