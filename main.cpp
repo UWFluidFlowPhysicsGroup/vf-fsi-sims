@@ -141,8 +141,8 @@ int main(int argc, char *argv[]){
             
             // Define penetration criterion, incompressible plane along mid plane
             auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
-              double midplane = 0;
-              double gap = 3.795;
+              double midplane = 8.5;
+              double gap = 0.1;
               // Check if point is between min and max collision zone
               if ((p[1] >  (midplane - gap/2)) && (p[1] < (midplane + gap/2))){
                 if (disp[1] < 0){
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]){
               return (Tensor<1,2>({0,-disp[1]}));
             };
 
-            double PMLlength = 90, SigmaMax = 340000;
+            double PMLlength = 50, SigmaMax = 340000;
             auto sigma_pml_field =
             [PMLlength, SigmaMax](const Point<2> &p, const unsigned int component) {
               (void)component;
