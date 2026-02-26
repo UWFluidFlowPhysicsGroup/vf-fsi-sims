@@ -159,7 +159,7 @@ int main(int argc, char *argv[]){
               return (Tensor<1,2>({0,-disp[1]}));
             };
 
-            double PMLlength = 50, SigmaMax = 340000;
+            double PMLlength = 10, SigmaMax = 200000;
             auto sigma_pml_field =
             [PMLlength, SigmaMax](const Point<2> &p, const unsigned int component) {
               (void)component;
