@@ -21,7 +21,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.5.0)
 # Might need to change hints for server simulations,
 # server dealii found at $EBROOTDEALII
 find_package(deal.II ${DEAL_II_VERSION_REQUIRED}
-    # HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../../../ $ENV{DEAL_II_DIR}
+    HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../../../ $ENV{DEAL_II_DIR}
 )
 
 IF(NOT ${deal.II_FOUND})

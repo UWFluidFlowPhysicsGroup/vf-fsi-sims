@@ -72,7 +72,7 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"M5_BC_Half"};
+  const std::string simMeshSolid[] = {"BC_Half_1mm"};
   const std::string simMeshFluid[] = {"Fluid_Half_100_Gradient"};
   const std::string meshPath = "meshes/";
   const std::string paramsPath = "parameters_2D_BC_Half.prm";
