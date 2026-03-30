@@ -251,34 +251,36 @@ int main(int argc, char *argv[]){
                   << "Check if " << paramsPath << "exists or has valid dimensions";
         exit(0);
       }
-
-      //define path to current file location
-      std::filesystem::path p = std::filesystem::current_path();
       
-      std::string outputFolder;
-      if (params.simulation_type == "Solid"){
-        outputFolder = meshSolid;
-      }else if(params.simulation_type == "Fluid"){
-        outputFolder = meshFluid;
-      }else if(params.simulation_type == "FSI"){
-        outputFolder = meshSolid + "_" + meshFluid;
-      }  
-      //moving file system info is broken for mpi, maybe need to stop mpi connection first?
-      //create folder with a title corresponding to the current solid/fluid mesh names
-      std::filesystem::create_directory(p / outputFolder);
+      if (MPI::COMM_WORLD.Get_rank() == 0){
+        //define path to current file location
+        std::filesystem::path p = std::filesystem::current_path();
+        
+        std::string outputFolder;
+        if (params.simulation_type == "Solid"){
+          outputFolder = meshSolid;
+        }else if(params.simulation_type == "Fluid"){
+          outputFolder = meshFluid;
+        }else if(params.simulation_type == "FSI"){
+          outputFolder = meshSolid + "_" + meshFluid;
+        }  
+        //moving file system info is broken for mpi, maybe need to stop mpi connection first?
+        //create folder with a title corresponding to the current solid/fluid mesh names
+        std::filesystem::create_directory(p / outputFolder);
 
-      //iterate through each file in the main directory
-      for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
-        //checks if each file is relevant to simulation results/output
-          //vtu -> info from separate segmented meshes, one for each processor being used
-          //pvtu -> joins vtu files together for a single timestep, only needed for parallel processes
-          //pvd -> joins pvtu/vtu files together through whole simulation
-          
-        //If files are not moved, then simulations will be overwritten with following simulations
-        if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd" || dirEntry.path().extension() == ".pvtu"){
-          
-          //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
-          std::filesystem::rename(p / dirEntry.path().filename(), p / outputFolder / dirEntry.path().filename());
+        //iterate through each file in the main directory
+        for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
+          //checks if each file is relevant to simulation results/output
+            //vtu -> info from separate segmented meshes, one for each processor being used
+            //pvtu -> joins vtu files together for a single timestep, only needed for parallel processes
+            //pvd -> joins pvtu/vtu files together through whole simulation
+            
+          //If files are not moved, then simulations will be overwritten with following simulations
+          if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd" || dirEntry.path().extension() == ".pvtu"){
+            
+            //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
+            std::filesystem::rename(p / dirEntry.path().filename(), p / outputFolder / dirEntry.path().filename());
+          }
         }
       }
     }
