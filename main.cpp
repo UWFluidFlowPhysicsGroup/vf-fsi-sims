@@ -159,23 +159,37 @@ int main(int argc, char *argv[]){
               return (Tensor<1,2>({0,-disp[1]}));
             };
 
-            double PMLlength = 5, SigmaMax = 5000;
+            double PMLLengthIn = 2, PMLLengthOut = 5, SigmaMax = 5000;
             auto sigma_pml_field =
-            [PMLlength, SigmaMax](const Point<2> &p, const unsigned int component) {
+            [PMLLengthIn, PMLLengthOut, SigmaMax](const Point<2> &p, const unsigned int component) {
               (void)component;
-              double SigmaPML = 0.0, L = 100;
+              double SigmaPML = 0.0, LIn = -10, LOut = 100;
               // For tube acoustics
-              if (p[0] > L - PMLlength)
+              if (p[0] > LOut - PMLLengthOut)
                 {
                   // A quadratic increasing function from boundary-PMLlength to the
                   // boundary
                   SigmaPML =
-                    SigmaMax * pow((p[0] + PMLlength - L) / PMLlength, 4);
+                    SigmaMax * pow((p[0] + PMLLengthOut - LOut) / PMLLengthOut, 4);
                 }
+                else if (p[0] < LIn + PMLLengthIn)
+                  {
+                    SigmaPML =
+                      SigmaMax * pow((p[0] - LIn - PMLLengthIn) / PMLLengthIn, 4);
+                  }
               return SigmaPML;
             };
             
+            //ramp up pressure linearly up to 800 Pa, constant at 8ms
+            // double t_const = 8e-3, Pmax = 800;
+            // auto linear_ramp = [t_const, Pmax](const Point<2> &p,
+            //                                      const unsigned int component,
+            //                                      const double time) -> double {
+            //   return time < t_const ? Pmax * (t_const - time) : Pmax;
+            // };
+
             fluid.set_sigma_pml_field(sigma_pml_field);
+            // fluid.add_hard_coded_boundary_condition(10, linear_ramp);
 
             MPI::FSI<2> fsi(fluid, solid, params, true);
             
