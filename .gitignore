@@ -2,9 +2,14 @@
 notes.md
 *.svg
 *.vtu
+*.pvtu
 *.pvd
 *.pvtu
 
 # Ignoring adding build files to git server, make habit to rebuild every time after changing branches
-/CMakeFiles/*
+/CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
 main
+MakeFile
+compile_commands.json

@@ -1,9 +1,0 @@
-/home/nhewko/VocalFolds/CMakeFiles/main.dir
-/home/nhewko/VocalFolds/CMakeFiles/run.dir
-/home/nhewko/VocalFolds/CMakeFiles/release.dir
-/home/nhewko/VocalFolds/CMakeFiles/runclean.dir
-/home/nhewko/VocalFolds/CMakeFiles/distclean.dir
-/home/nhewko/VocalFolds/CMakeFiles/strip_comments.dir
-/home/nhewko/VocalFolds/CMakeFiles/info.dir
-/home/nhewko/VocalFolds/CMakeFiles/edit_cache.dir
-/home/nhewko/VocalFolds/CMakeFiles/rebuild_cache.dir

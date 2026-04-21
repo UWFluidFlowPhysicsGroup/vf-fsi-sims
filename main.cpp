@@ -1,3 +1,21 @@
+// Build commands to set up libraries, need to export p4est library path each time Ubuntu is launched:
+// not needed if added to .bashrc file in home directory
+// export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/p4est_build/local/lib
+
+// modified CMakeLists to not need -I and -L commands anymore, still need -l commands
+// sudo make main -I $HOME/p4est_build/local/include -L $HOME/p4est_build/local/lib -lp4est -lsc -lz -lm
+// mpiexec -n 4 main
+
+// Replace 4 with number of cores you wish to run
+
+//https://education.molssi.org/parallel-programming/04-distributed-examples.html
+//https://stackoverflow.com/questions/23163075/how-to-compile-an-mpi-included-c-program-using-cmake
+//https://hpc-discourse.usc.edu/t/use-cmake-in-an-mpi-c-program/507/4
+//https://stackoverflow.com/questions/11368215/loading-shared-library-in-open-mpi-mpi-run
+
+//https://p4est.github.io/api/p4est-latest/installing_p4est.html
+//https://education.molssi.org/parallel-programming/04-distributed-examples.html
+
 //import dealII libraries
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/tria_accessor.h>
@@ -20,6 +38,7 @@
 //import OpenIFEM libraries
 //solid linear elastic solver
 #include "mpi_shared_linear_elasticity.h"
+#include "mpi_shared_hyper_elasticity.h"
 //fluid slightly compressible navier stokes solver, used cause it seems more stable for simulations?
 #include "mpi_scnsim.h"
 #include "mpi_insim.h"
@@ -39,12 +58,12 @@
 //create solid objects
 extern template class Solid::MPI::SharedLinearElasticity<2>;
 extern template class Solid::MPI::SharedLinearElasticity<3>;
+extern template class Solid::MPI::SharedHyperElasticity<2>;
+extern template class Solid::MPI::SharedHyperElasticity<3>;
 
 //create fluid objects
-// extern template class Fluid::MPI::SCnsIM<2>;
-// extern template class Fluid::MPI::SCnsIM<3>;
-extern template class Fluid::MPI::InsIM<2>;
-extern template class Fluid::MPI::InsIM<3>;
+extern template class Fluid::MPI::SCnsIM<2>;
+extern template class Fluid::MPI::SCnsIM<3>;
 
 //fluid-solid interface objects
 extern template class MPI::FSI<2>;
@@ -54,12 +73,10 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  // const std::string simMeshSolid[] = {"VF_M5_BLCE_2D_Half"};
-  // const std::string simMeshFluid[] = {"VF_Fluid_FSI_2D_Half"};
-  const std::string simMeshSolid[] = {"SquareMesh_4", "SquareMesh_16", "SquareMesh_64"};
+  const std::string simMeshSolid[] = {""};
   const std::string simMeshFluid[] = {""};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters_TMP.prm";
+  const std::string paramsPath = "parameters.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
@@ -122,19 +139,7 @@ int main(int argc, char *argv[]){
             //combine solid and fluid meshes to make FSI simulation
             Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
             Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
-            
-            // // Define penetration criterion, incompressible plane along mid plane
-            // auto penetration_criterion = [](const Point<2> &p) -> double {
-            //   double midplane = (1.69-0.005)/2;
-            //   return (p[0] - midplane);
-            // };
-
             MPI::FSI<2> fsi(fluid, solid, params, true);
-            
-            // //apply penetration criterion to simulation, can only set one penetration criterion for the whole model
-            // fsi.set_penetration_criterion(penetration_criterion,
-            //                             Tensor<1, 2>({-1, 0}));
-
             fsi.run();
           }else{
             //error occured
@@ -203,7 +208,11 @@ int main(int argc, char *argv[]){
                   << "Check if " << paramsPath << "exists or has valid dimensions";
         exit(0);
       }
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> vocalFolds
       if (MPI::COMM_WORLD.Get_rank() == 0){
         //define path to current file location
         std::filesystem::path p = std::filesystem::current_path();
