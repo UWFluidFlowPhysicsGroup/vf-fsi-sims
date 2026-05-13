@@ -61,8 +61,6 @@ extern template class Solid::MPI::SharedLinearElasticity<3>;
 //create fluid objects
 extern template class Fluid::MPI::SCnsIM<2>;
 extern template class Fluid::MPI::SCnsIM<3>;
-// extern template class Fluid::MPI::InsIM<2>;
-// extern template class Fluid::MPI::InsIM<3>;
 
 //fluid-solid interface objects
 extern template class MPI::FSI<2>;
@@ -73,7 +71,7 @@ using namespace dealii;
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
   const std::string simMeshSolid[] = {"BC_Half_1mm"};
-  const std::string simMeshFluid[] = {"Fluid_Half_100_Gradient"};
+  const std::string simMeshFluid[] = {"Fluid_Half"};
   const std::string meshPath = "meshes/";
   const std::string paramsPath = "parameters_2D_BC_Half.prm";
   //read parameters file to determine the dimensions present
@@ -141,8 +139,8 @@ int main(int argc, char *argv[]){
             
             // Define penetration criterion, incompressible plane along mid plane
             auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
-              double midplane = 8.4;
-              double gap = 0;
+              double midplane = 8.8;
+              double gap = 0.8;
               // Check if point is between min and max collision zone
               if ((p[1] >  (midplane - gap/2)) && (p[1] < (midplane + gap/2))){
                 if (disp[1] < 0){
@@ -159,37 +157,46 @@ int main(int argc, char *argv[]){
               return (Tensor<1,2>({0,-disp[1]}));
             };
 
-            double PMLLengthIn = 2, PMLLengthOut = 5, SigmaMax = 5000;
-            auto sigma_pml_field =
-            [PMLLengthIn, PMLLengthOut, SigmaMax](const Point<2> &p, const unsigned int component) {
-              (void)component;
-              double SigmaPML = 0.0, LIn = -10, LOut = 100;
-              // For tube acoustics
-              if (p[0] > LOut - PMLLengthOut)
+            auto body_force = [](const Point<2> &point,
+                               const unsigned int component) -> double {
+              double rho = 1.2e-6;
+              double bf = 1e-3 / rho;
+              if (point[0] > -30 - 5e-4 && point[0] < -25 + 5e-4 &&
+                  component == 0)
                 {
-                  // A quadratic increasing function from boundary-PMLlength to the
-                  // boundary
-                  SigmaPML =
-                    SigmaMax * pow((p[0] + PMLLengthOut - LOut) / PMLLengthOut, 4);
+                  return bf;
                 }
-                else if (p[0] < LIn + PMLLengthIn)
-                  {
-                    SigmaPML =
-                      SigmaMax * pow((p[0] - LIn - PMLLengthIn) / PMLLengthIn, 4);
-                  }
-              return SigmaPML;
+              return 0.0;
+            };
+
+            // double PMLLengthIn = 2, SigmaMax = 5000;
+            // double SigmaPML = 0.0, LIn = -10
+            auto sigma_pml_field = [](const Point<2> &point,
+                                const unsigned int component) -> double {
+              (void)component;
+              double sigmaMax = 5000;
+              double pmlLength = 5.0;
+              double sigmaPML = 0.0;
+              std::vector<double> boundary = {-50.0};
+              std::vector<unsigned int> boundary_dir = {0};
+              for (unsigned int i = 0; i < boundary.size(); ++i)
+                {
+                  if (std::abs(point[boundary_dir[i]] - boundary[i]) < pmlLength)
+                    {
+                      sigmaPML =
+                        sigmaMax *
+                        pow((pmlLength -
+                            std::abs(point[boundary_dir[i]] - boundary[i])) /
+                              pmlLength,
+                            4);
+                    }
+                }
+              return sigmaPML;
             };
             
-            //ramp up pressure linearly up to 800 Pa, constant at 8ms
-            // double t_const = 8e-3, Pmax = 800;
-            // auto linear_ramp = [t_const, Pmax](const Point<2> &p,
-            //                                      const unsigned int component,
-            //                                      const double time) -> double {
-            //   return time < t_const ? Pmax * (t_const - time) : Pmax;
-            // };
-
+            
             fluid.set_sigma_pml_field(sigma_pml_field);
-            // fluid.add_hard_coded_boundary_condition(10, linear_ramp);
+            fluid.set_body_force(body_force);
 
             MPI::FSI<2> fsi(fluid, solid, params, true);
             
