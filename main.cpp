@@ -70,10 +70,10 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"BC_Half_1mm"};
-  const std::string simMeshFluid[] = {"Fluid_Half"};
+  const std::string simMeshSolid[] = {""};
+  const std::string simMeshFluid[] = {"Fluid_Half_Coarse"};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters_2D_BC_Half.prm";
+  const std::string paramsPath = "parameters_fluid.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
@@ -131,6 +131,50 @@ int main(int argc, char *argv[]){
             solid.run();
           }else if(params.simulation_type == "Fluid"){
             Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
+
+            auto body_force = [](const Point<2> &point,
+                               const unsigned int component) -> double {
+              double rho = 1.2e-6;
+              double bf = 1e-3 / rho;
+              if (point[0] > -30 - 5e-4 && point[0] < -25 + 5e-4 &&
+                  component == 0)
+                {
+                  return bf;
+                }
+              return 0.0;
+            };
+
+            // double PMLLengthIn = 2, SigmaMax = 5000;
+            // double SigmaPML = 0.0, LIn = -10
+            auto sigma_pml_field = [](const Point<2> &point,
+                                const unsigned int component) -> double {
+              (void)component;
+              double sigmaMax = 5000;
+              double pmlLength = 5.0;
+              double sigmaPML = 0.0;
+              std::vector<double> boundary = {-50.0};
+              std::vector<unsigned int> boundary_dir = {0};
+              for (unsigned int i = 0; i < boundary.size(); ++i)
+                {
+                  if (std::abs(point[boundary_dir[i]] - boundary[i]) < pmlLength)
+                    {
+                      sigmaPML =
+                        sigmaMax *
+                        pow((pmlLength -
+                            std::abs(point[boundary_dir[i]] - boundary[i])) /
+                              pmlLength,
+                            4);
+                    }
+                }
+              return sigmaPML;
+            };
+            
+            
+            fluid.set_sigma_pml_field(sigma_pml_field);
+            fluid.set_body_force(body_force);
+
+
+
             fluid.run();
           }else if(params.simulation_type == "FSI"){
             //combine solid and fluid meshes to make FSI simulation
