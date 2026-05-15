@@ -159,13 +159,13 @@ int main(int argc, char *argv[]){
 
             auto body_force = [](const Point<2> &point,
                                const unsigned int component) -> double {
-              double rho = 1.2e-6;
-              double bf = 1e-3 / rho;
-              if (point[0] > -30 - 5e-4 && point[0] < -25 + 5e-4 &&
-                  component == 0)
-                {
-                  return bf;
-                }
+              double bfMid = -50;
+              double bfLength = 40;
+              double bfMax = 5000;
+              
+              if (std::abs(2*(point[0] - bfMid)) < bfLength && component == 0){
+                return bfMax * (pow(-2 * (point[0] - bfMax) / bfLength, 4) + 1);
+              }
               return 0.0;
             };
 
@@ -174,8 +174,8 @@ int main(int argc, char *argv[]){
             auto sigma_pml_field = [](const Point<2> &point,
                                 const unsigned int component) -> double {
               (void)component;
-              double sigmaMax = 5000;
-              double pmlLength = 5.0;
+              double sigmaMax = 10e3;
+              double pmlLength = 10.0;
               double sigmaPML = 0.0;
               std::vector<double> boundary = {-50.0};
               std::vector<unsigned int> boundary_dir = {0};
