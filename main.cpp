@@ -70,7 +70,7 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"BC_Half_1mm"};
+  const std::string simMeshSolid[] = {"BC_Half"};
   const std::string simMeshFluid[] = {"Fluid_Half_8.4"};
   const std::string meshPath = "meshes/";
   const std::string paramsPath = "parameters_2D_BC_Half.prm";
@@ -131,44 +131,6 @@ int main(int argc, char *argv[]){
             solid.run();
           }else if(params.simulation_type == "Fluid"){
             Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
-            auto body_force = [](const Point<2> &point,
-                               const unsigned int component) -> double {
-              double bfMid = -50;
-              double bfLength = 10;
-              double bfMax = 0.75e3;
-              
-              if (std::abs(2*(point[0] - bfMid)) < bfLength && component == 0){
-                return bfMax * (pow(-2 * (point[0] - bfMax) / bfLength, 4) + 1);
-              }
-              return 0.0;
-            };
-
-            auto sigma_pml_field = [](const Point<2> &point,
-                                const unsigned int component) -> double {
-              (void)component;
-              double sigmaMax = 10e3;
-              double pmlLength = 10.0;
-              double sigmaPML = 0.0;
-              std::vector<double> boundary = {-50.0};
-              std::vector<unsigned int> boundary_dir = {0};
-              for (unsigned int i = 0; i < boundary.size(); ++i)
-                {
-                  if (std::abs(point[boundary_dir[i]] - boundary[i]) < pmlLength)
-                    {
-                      sigmaPML =
-                        sigmaMax *
-                        pow((pmlLength -
-                            std::abs(point[boundary_dir[i]] - boundary[i])) /
-                              pmlLength,
-                            4);
-                    }
-                }
-              return sigmaPML;
-            };
-
-            fluid.set_sigma_pml_field(sigma_pml_field);
-            fluid.set_body_force(body_force);
-            
             fluid.run();
           }else if(params.simulation_type == "FSI"){
             //combine solid and fluid meshes to make FSI simulation
@@ -197,7 +159,7 @@ int main(int argc, char *argv[]){
 
             auto body_force = [](const Point<2> &point,
                                const unsigned int component) -> double {
-              double bfMid = -50;
+              double bfMid = -30;
               double bfLength = 10;
               double bfMax = 0.75e3;
               
@@ -215,8 +177,8 @@ int main(int argc, char *argv[]){
               double sigmaMax = 10e3;
               double sigmaPML = 0.0;
               
-              std::vector<double> boundary = {-100.0,-70, 84.5};
-              std::vector<double> length = {30, 20, 20};
+              std::vector<double> boundary = {-60, -70, 142.5};
+              std::vector<double> length = {10, 10, 10};
               std::vector<unsigned int> boundary_dir = {0, 1, 0};
               for (unsigned int i = 0; i < boundary.size(); i++)
                 {
@@ -235,7 +197,7 @@ int main(int argc, char *argv[]){
             
             
             fluid.set_sigma_pml_field(sigma_pml_field);
-            fluid.set_body_force(body_force);
+            // fluid.set_body_force(body_force);
 
             MPI::FSI<2> fsi(fluid, solid, params, true);
             
