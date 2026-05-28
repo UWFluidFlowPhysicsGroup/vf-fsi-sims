@@ -70,8 +70,8 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"BC_Half"};
-  const std::string simMeshFluid[] = {"Fluid_Half_8.4"};
+  const std::string simMeshSolid[] = {"Test_Solid"};
+  const std::string simMeshFluid[] = {"Test_Fluid"};
   const std::string meshPath = "meshes/";
   const std::string paramsPath = "parameters_2D_BC_Half.prm";
   //read parameters file to determine the dimensions present
@@ -196,14 +196,14 @@ int main(int argc, char *argv[]){
             };
             
             
-            fluid.set_sigma_pml_field(sigma_pml_field);
+            // fluid.set_sigma_pml_field(sigma_pml_field);
             // fluid.set_body_force(body_force);
 
             MPI::FSI<2> fsi(fluid, solid, params, true);
             
             //apply penetration criterion to simulation, can only set one penetration criterion for the whole model
-            fsi.set_penetration_criterion(penetration_criterion);
-            fsi.set_penetration_direction(penetration_direction);
+            // fsi.set_penetration_criterion(penetration_criterion);
+            // fsi.set_penetration_direction(penetration_direction);
 
             fsi.run();
           }else{
@@ -274,37 +274,37 @@ int main(int argc, char *argv[]){
         exit(0);
       }
       
-      if (MPI::COMM_WORLD.Get_rank() == 0){
-        //define path to current file location
-        std::filesystem::path p = std::filesystem::current_path();
+      // if (MPI::COMM_WORLD.Get_rank() == 0){
+      //   //define path to current file location
+      //   std::filesystem::path p = std::filesystem::current_path();
         
-        std::string outputFolder;
-        if (params.simulation_type == "Solid"){
-          outputFolder = meshSolid;
-        }else if(params.simulation_type == "Fluid"){
-          outputFolder = meshFluid;
-        }else if(params.simulation_type == "FSI"){
-          outputFolder = meshSolid + "_" + meshFluid;
-        }  
-        //moving file system info is broken for mpi, maybe need to stop mpi connection first?
-        //create folder with a title corresponding to the current solid/fluid mesh names
-        std::filesystem::create_directory(p / outputFolder);
+      //   std::string outputFolder;
+      //   if (params.simulation_type == "Solid"){
+      //     outputFolder = meshSolid;
+      //   }else if(params.simulation_type == "Fluid"){
+      //     outputFolder = meshFluid;
+      //   }else if(params.simulation_type == "FSI"){
+      //     outputFolder = meshSolid + "_" + meshFluid;
+      //   }  
+      //   //moving file system info is broken for mpi, maybe need to stop mpi connection first?
+      //   //create folder with a title corresponding to the current solid/fluid mesh names
+      //   std::filesystem::create_directory(p / outputFolder);
 
-        //iterate through each file in the main directory
-        for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
-          //checks if each file is relevant to simulation results/output
-            //vtu -> info from separate segmented meshes, one for each processor being used
-            //pvtu -> joins vtu files together for a single timestep, only needed for parallel processes
-            //pvd -> joins pvtu/vtu files together through whole simulation
+      //   //iterate through each file in the main directory
+      //   for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
+      //     //checks if each file is relevant to simulation results/output
+      //       //vtu -> info from separate segmented meshes, one for each processor being used
+      //       //pvtu -> joins vtu files together for a single timestep, only needed for parallel processes
+      //       //pvd -> joins pvtu/vtu files together through whole simulation
             
-          //If files are not moved, then simulations will be overwritten with following simulations
-          if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd" || dirEntry.path().extension() == ".pvtu"){
+      //     //If files are not moved, then simulations will be overwritten with following simulations
+      //     if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd" || dirEntry.path().extension() == ".pvtu"){
             
-            //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
-            std::filesystem::rename(p / dirEntry.path().filename(), p / outputFolder / dirEntry.path().filename());
-          }
-        }
-      }
+      //       //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
+      //       std::filesystem::rename(p / dirEntry.path().filename(), p / outputFolder / dirEntry.path().filename());
+      //     }
+      //   }
+      // }
     }
   }
 }

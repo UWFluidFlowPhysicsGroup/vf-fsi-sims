@@ -18,19 +18,19 @@ subsection Simulation
   set Global refinements = 0, 0 
 
   # The end time of the simulation in second
-  set End time = 2.5e-1
+  set End time = 2e-3
 
   # The time step in second
-  set Time step size = 0.5e-6
+  set Time step size = 0.5e-3
 
   # The output interval frequency
-  set Output interval = 2.5e-4
+  set Output interval = 0.5e-1
 
   # Mesh refinement interval in second
   set Refinement interval = 1e10
 
   # Checkpoint save interval in second
-  set Save interval = 2.5e-4
+  set Save interval = 2e-1
 
   # Body force which applies to both fluid and solid (acceleration) (cm s^-2) -> (m s^-2 * 100)
   set Gravity = 0.0, 0.0
@@ -80,20 +80,20 @@ subsection Fluid Dirichlet BCs
   set Use hard-coded boundary values = 0
 
   # Number of boundaries with Dirichlet BCs
-  set Number of Dirichlet BCs = 2
+  set Number of Dirichlet BCs = 1
 
   # List all the boundaries with Dirichlet BCs
-  set Dirichlet boundary id = 12, 13
+  set Dirichlet boundary id = 12
 
   # List the constrained components of these boundaries
   # One decimal number indicates one set of constrained components:
   # 1-x, 2-y, 3-xy, 4-z, 5-xz, 6-yz, 7-xyz
   # To make sense of the numbering, convert decimals to binaries (zyx)
-  set Dirichlet boundary components = 3, 2
+  set Dirichlet boundary components = 3
 
   # Specify the values of the Dirichlet BCs, including both homogeneous and
   # inhomogeneous ones. (cm s^-1)
-  set Dirichlet boundary values = 0, 0, 0
+  set Dirichlet boundary values = 0, 0
 end
 
 subsection Fluid Neumann BCs
@@ -105,7 +105,7 @@ subsection Fluid Neumann BCs
   set Neumann boundary id = 10, 11
 
   #Specify the values of the pressure of the Neumann BCs
-  set Neumann boundary values = 0, 0
+  set Neumann boundary values = 1, 0
 end
 
 # --------------------------------------------------------------------------------
@@ -120,19 +120,19 @@ subsection Solid material properties
   set Solid type = LinearElastic
   
   # Number of different materials used in solid
-  set Number of solid parts = 2
+  set Number of solid parts = 1
 
   # # Material Type, only Isotropic and PlanarIsotropic for linearelastic materials for now
-  set Material type = Isotropic, Isotropic
+  set Material type = Isotropic
 
   # Solid density (g/cm^3), used by all solid solvers
   set Solid density = 1.07e-3
 
   # Isotropic material properties (Pa)
   # E and nu are only used by Isotropic LinearElastic materials
-  set Young's modulus = 40e3, 10e3
-
-  set Poisson's ratio = 0.3, 0.3
+  set Young's modulus = 40e3
+  
+  set Poisson's ratio = 0.3
 
   # # Anisotropic material properties
   # # Initial fiber direction for non isotropic materials only. Expecting number of materials * dim values
@@ -153,10 +153,10 @@ subsection Solid material properties
   # # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
   # set Shear modulus = 12e3, 40e3
 
-  set Viscosity = 1, 1
+  set Viscosity = 0
 
   # A list of parameters used by hyperelasticMaterial
-  set Hyperelastic parameters = 0.5, 1.67, 0.5, 1.67
+  set Hyperelastic parameters = 0.5, 1.67
 end
 
 subsection Solid solver control
