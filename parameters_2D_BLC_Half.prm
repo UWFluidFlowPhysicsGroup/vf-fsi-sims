@@ -120,19 +120,19 @@ subsection Solid material properties
   set Solid type = LinearElastic
   
   # Number of different materials used in solid
-  set Number of solid parts = 2
+  set Number of solid parts = 3
 
   # # Material Type, only Isotropic and PlanarIsotropic for linearelastic materials for now
-  set Material type = Isotropic, Isotropic
+  set Material type = Isotropic, Isotropic, Isotropic
 
   # Solid density (g/cm^3), used by all solid solvers
   set Solid density = 1.07e-3
 
   # Isotropic material properties (Pa)
   # E and nu are only used by Isotropic LinearElastic materials
-  set Young's modulus = 40e3, 10e3
+  set Young's modulus = 40e3, 10e3, 4e3
 
-  set Poisson's ratio = 0.3, 0.3
+  set Poisson's ratio = 0.3, 0.3, 0.3
 
   # # Anisotropic material properties
   # # Initial fiber direction for non isotropic materials only. Expecting number of materials * dim values
@@ -153,10 +153,10 @@ subsection Solid material properties
   # # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
   # set Shear modulus = 12e3, 40e3
 
-  set Viscosity = 0.5, 0.5
+  set Viscosity = 0.5, 0.5, 0.5
 
   # A list of parameters used by hyperelasticMaterial
-  set Hyperelastic parameters = 0.5, 1.67, 0.5, 1.67
+  set Hyperelastic parameters = 0.5, 1.67, 0.5, 1.67, 0.5, 1.67
 end
 
 subsection Solid solver control
