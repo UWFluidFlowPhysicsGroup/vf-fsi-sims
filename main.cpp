@@ -131,44 +131,6 @@ int main(int argc, char *argv[]){
             solid.run();
           }else if(params.simulation_type == "Fluid"){
             Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
-            auto body_force = [](const Point<2> &point,
-                               const unsigned int component) -> double {
-              double bfMid = -50;
-              double bfLength = 10;
-              double bfMax = 0.75e3;
-              
-              if (std::abs(2*(point[0] - bfMid)) < bfLength && component == 0){
-                return bfMax * (pow(-2 * (point[0] - bfMax) / bfLength, 4) + 1);
-              }
-              return 0.0;
-            };
-
-            auto sigma_pml_field = [](const Point<2> &point,
-                                const unsigned int component) -> double {
-              (void)component;
-              double sigmaMax = 10e3;
-              double pmlLength = 10.0;
-              double sigmaPML = 0.0;
-              std::vector<double> boundary = {-50.0};
-              std::vector<unsigned int> boundary_dir = {0};
-              for (unsigned int i = 0; i < boundary.size(); ++i)
-                {
-                  if (std::abs(point[boundary_dir[i]] - boundary[i]) < pmlLength)
-                    {
-                      sigmaPML =
-                        sigmaMax *
-                        pow((pmlLength -
-                            std::abs(point[boundary_dir[i]] - boundary[i])) /
-                              pmlLength,
-                            4);
-                    }
-                }
-              return sigmaPML;
-            };
-
-            fluid.set_sigma_pml_field(sigma_pml_field);
-            fluid.set_body_force(body_force);
-            
             fluid.run();
           }else if(params.simulation_type == "FSI"){
             //combine solid and fluid meshes to make FSI simulation
@@ -201,9 +163,7 @@ int main(int argc, char *argv[]){
               double bfLength = 10;
               double bfMax = 0.8e5*1e3;
 		            //Extra 1e3 fudge factor for unit conversions
-              
               if (std::abs(2*(point[0] - bfMid)) < bfLength && component == 0){
-                //return bfMax * (pow(-2 * (point[0] - bfMax) / bfLength, 4) + 1);
                 return bfMax;
               }
               return 0.0;
