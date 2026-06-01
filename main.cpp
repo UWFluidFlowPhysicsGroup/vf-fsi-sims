@@ -40,7 +40,7 @@
 #include "mpi_shared_linear_elasticity.h"
 //fluid slightly compressible navier stokes solver, used cause it seems more stable for simulations?
 #include "mpi_scnsim.h"
-#include "mpi_insim.h"
+#include "mpi_insimex.h"
 //fluid-solid interface solver
 #include "mpi_fsi.h"
 #include "parameters.h"
@@ -54,11 +54,14 @@
 #include <map>
 #include <filesystem>
 
+#include "petscsys.h"
+
 //create solid objects
 extern template class Solid::MPI::SharedLinearElasticity<2>;
 extern template class Solid::MPI::SharedLinearElasticity<3>;
 
 //create fluid objects
+// extern template class Fluid::MPI::InsIMEX<2>;
 extern template class Fluid::MPI::SCnsIM<2>;
 extern template class Fluid::MPI::SCnsIM<3>;
 
@@ -130,11 +133,13 @@ int main(int argc, char *argv[]){
             Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
             solid.run();
           }else if(params.simulation_type == "Fluid"){
+            // Fluid::MPI::InsIMEX<2> fluid(triaFluid, params);
             Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
             fluid.run();
           }else if(params.simulation_type == "FSI"){
             //combine solid and fluid meshes to make FSI simulation
             Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
+            // Fluid::MPI::InsIMEX<2> fluid(triaFluid, params);
             Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
             
             // Define penetration criterion, incompressible plane along mid plane
