@@ -71,7 +71,7 @@ using namespace dealii;
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
   const std::string simMeshSolid[] = {"BCS_2_1"};
-  const std::string simMeshFluid[] = {"Fluid_Half"};
+  const std::string simMeshFluid[] = {"Fluid_Half_8.4"};
   const std::string meshPath = "meshes/";
   const std::string paramsPath = "parameters_2D_BCS_Half.prm";
   //read parameters file to determine the dimensions present
@@ -139,8 +139,8 @@ int main(int argc, char *argv[]){
             
             // Define penetration criterion, incompressible plane along mid plane
             auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
-              double midplane = 15;
-              double gap = 2;
+              double midplane = 8.8;
+              double gap = 0.8;
               // Check if point is between min and max collision zone
               if ((p[1] >  (midplane - gap/2)) && (p[1] < (midplane + gap/2))){
                 if (disp[1] < 0){
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]){
 
             auto body_force = [](const Point<2> &point,
                                const unsigned int component) -> double {
-              double bfMid = -50;
+              double bfMid = -40;
               double bfLength = 10;
               double bfMax = 0.8e5*1e3;
 		            //Extra 1e3 fudge factor for unit conversions
@@ -174,27 +174,24 @@ int main(int argc, char *argv[]){
             auto sigma_pml_field = [](const Point<2> &point,
                                 const unsigned int component) -> double {
               (void)component;
-              double sigmaMax = 5e3;
-              double sigmaPML = 0.0;
+              double sigmaMax = 10e3;
               
-              std::vector<double> boundary = {-120.0, -100, 290};
-              std::vector<double> length = {30, 20, 20};
+              std::vector<double> boundary = {-60.0, -70, 142.5};
+              std::vector<double> length = {10, 10, 10};
               std::vector<unsigned int> boundary_dir = {0, 1, 0};
               for (unsigned int i = 0; i < boundary.size(); i++)
                 {
                   if (std::abs(point[boundary_dir[i]] - boundary[i]) < length[i])
                     {
-                      sigmaPML =
-                        sigmaMax *
+                      return sigmaMax *
                         pow((length[i] -
                             std::abs(point[boundary_dir[i]] - boundary[i])) /
                               length[i],
                             4);
                     }
                 }
-              return sigmaPML;
+              return 0.0;
             };
-            
             
             fluid.set_sigma_pml_field(sigma_pml_field);
             fluid.set_body_force(body_force);
