@@ -115,6 +115,10 @@ subsection Solid finite element system
   set Degree = 1
 end
 
+###############################################
+#       Body Cover Ligament Scar model        #
+###############################################
+
 subsection Solid material properties
   # Material type, currently LinearElastic, Kirchhoff and NeoHookean are available
   set Solid type = LinearElastic
