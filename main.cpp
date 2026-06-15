@@ -76,7 +76,7 @@ int main(int argc, char *argv[]){
   const std::string simMeshSolid[] = {"Test_Solid"};
   const std::string simMeshFluid[] = {"Test_Fluid"};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters_2D_BC_Half.prm";
+  const std::string paramsPath = "parameters_2D_BCS_Half.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
@@ -128,93 +128,24 @@ int main(int argc, char *argv[]){
           gridIn.read_msh(fluidPath);
         }
 
-        //sim.loadMesh(meshSolid, meshFluid);
-          if (params.simulation_type == "Solid"){
-            Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
-            solid.run();
-          }else if(params.simulation_type == "Fluid"){
-            // Fluid::MPI::InsIMEX<2> fluid(triaFluid, params);
-            Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
-            fluid.run();
-          }else if(params.simulation_type == "FSI"){
-            //combine solid and fluid meshes to make FSI simulation
-            Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
-            // Fluid::MPI::InsIMEX<2> fluid(triaFluid, params);
-            Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
-            
-            // Define penetration criterion, incompressible plane along mid plane
-            auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
-              double midplane = 8.8;
-              double gap = 0.8;
-              // Check if point is between min and max collision zone
-              if ((p[1] >  (midplane - gap/2)) && (p[1] < (midplane + gap/2))){
-                if (disp[1] < 0){
-                  return (midplane + gap/2 - p[1]);
-                }else{
-                  return (p[1] - (midplane-gap/2));
-                }
-              }
-              return (0);
-            };
-
-            // keeping vertex point data for futureproofing mpi_fsi class, could also overload function instead
-            auto penetration_direction = [](const Point<2> &p, const Point<2> &disp) -> Tensor<1, 2> {
-              return (Tensor<1,2>({0,-disp[1]}));
-            };
-
-            auto body_force = [](const Point<2> &point,
-                               const unsigned int component) -> double {
-              double bfMid = -30;
-              double bfLength = 10;
-              double bfMax = 0.75e3;
-              
-              if (std::abs(2*(point[0] - bfMid)) < bfLength && component == 0){
-                return bfMax * (pow(-2 * (point[0] - bfMax) / bfLength, 4) + 1);
-              }
-              return 0.0;
-            };
-
-            // double PMLLengthIn = 2, SigmaMax = 5000;
-            // double SigmaPML = 0.0, LIn = -10
-            auto sigma_pml_field = [](const Point<2> &point,
-                                const unsigned int component) -> double {
-              (void)component;
-              double sigmaMax = 10e3;
-              double sigmaPML = 0.0;
-              
-              std::vector<double> boundary = {-60, -70, 142.5};
-              std::vector<double> length = {10, 10, 10};
-              std::vector<unsigned int> boundary_dir = {0, 1, 0};
-              for (unsigned int i = 0; i < boundary.size(); i++)
-                {
-                  if (std::abs(point[boundary_dir[i]] - boundary[i]) < length[i])
-                    {
-                      sigmaPML =
-                        sigmaMax *
-                        pow((length[i] -
-                            std::abs(point[boundary_dir[i]] - boundary[i])) /
-                              length[i],
-                            4);
-                    }
-                }
-              return sigmaPML;
-            };
-            
-            
-            // fluid.set_sigma_pml_field(sigma_pml_field);
-            // fluid.set_body_force(body_force);
-
-            MPI::FSI<2> fsi(fluid, solid, params, true);
-            
-            //apply penetration criterion to simulation, can only set one penetration criterion for the whole model
-            // fsi.set_penetration_criterion(penetration_criterion);
-            // fsi.set_penetration_direction(penetration_direction);
-
-            fsi.run();
-          }else{
-            //error occured
-            exit(0);
-          }
+        if (params.simulation_type == "Solid"){
+          Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
+          solid.run();
+        }else if(params.simulation_type == "Fluid"){
+          // Fluid::MPI::InsIMEX<2> fluid(triaFluid, params);
+          Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
+          fluid.run();
+        }else if(params.simulation_type == "FSI"){
+          //combine solid and fluid meshes to make FSI simulation
+          Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
+          // Fluid::MPI::InsIMEX<2> fluid(triaFluid, params);
+          Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);            
+          MPI::FSI<2> fsi(fluid, solid, params, true);
+          fsi.run();
+        }else{
+          //error occured
+          exit(0);
+        }
 
       } else if (params.dimension == 3){
         Triangulation<3> triaSolid;
@@ -278,38 +209,7 @@ int main(int argc, char *argv[]){
                   << "Check if " << paramsPath << "exists or has valid dimensions";
         exit(0);
       }
-      
-      // if (MPI::COMM_WORLD.Get_rank() == 0){
-      //   //define path to current file location
-      //   std::filesystem::path p = std::filesystem::current_path();
-        
-      //   std::string outputFolder;
-      //   if (params.simulation_type == "Solid"){
-      //     outputFolder = meshSolid;
-      //   }else if(params.simulation_type == "Fluid"){
-      //     outputFolder = meshFluid;
-      //   }else if(params.simulation_type == "FSI"){
-      //     outputFolder = meshSolid + "_" + meshFluid;
-      //   }  
-      //   //moving file system info is broken for mpi, maybe need to stop mpi connection first?
-      //   //create folder with a title corresponding to the current solid/fluid mesh names
-      //   std::filesystem::create_directory(p / outputFolder);
-
-      //   //iterate through each file in the main directory
-      //   for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
-      //     //checks if each file is relevant to simulation results/output
-      //       //vtu -> info from separate segmented meshes, one for each processor being used
-      //       //pvtu -> joins vtu files together for a single timestep, only needed for parallel processes
-      //       //pvd -> joins pvtu/vtu files together through whole simulation
-            
-      //     //If files are not moved, then simulations will be overwritten with following simulations
-      //     if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd" || dirEntry.path().extension() == ".pvtu"){
-            
-      //       //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
-      //       std::filesystem::rename(p / dirEntry.path().filename(), p / outputFolder / dirEntry.path().filename());
-      //     }
-      //   }
-      // }
     }
   }
+  exit(0);
 }

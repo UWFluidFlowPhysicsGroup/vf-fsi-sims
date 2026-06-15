@@ -50,7 +50,7 @@ subsection Fluid finite element system
   set Pressure degree = 1
 
   # The degree of velocity element. For grad-div solver this must be one higher than pressure
-  set Velocity degree = 2
+  set Velocity degree = 1
 end
 
 subsection Fluid material properties
@@ -115,15 +115,16 @@ subsection Solid finite element system
   set Degree = 1
 end
 
+#################################
+#       Body Cover model        #
+#################################
+
 subsection Solid material properties
   # Material type, currently LinearElastic, Kirchhoff and NeoHookean are available
   set Solid type = LinearElastic
   
   # Number of different materials used in solid
   set Number of solid parts = 1
-
-  # # Material Type, only Isotropic and PlanarIsotropic for linearelastic materials for now
-  set Material type = Isotropic
 
   # Solid density (g/cm^3), used by all solid solvers
   set Solid density = 1.07e-3
@@ -133,25 +134,6 @@ subsection Solid material properties
   set Young's modulus = 40e3
   
   set Poisson's ratio = 0.3
-
-  # # Anisotropic material properties
-  # # Initial fiber direction for non isotropic materials only. Expecting number of materials * dim values
-  # set Initial fiber direction = 0, 1, 0, 1
-
-  # # Young's modulus (Pa) in fiber direction, only used for transverse isotropic materials
-  # set Young's modulus 1 = 39900e3, 33060e3
-
-  # # Young's modulus (Pa) pependicular to fiber direction, only used for transverse isotropic materials
-  # set Young's modulus 2 = 4e3, 3.3e3
-
-  # # Poisson's ratio involving fiber direction, only used for transverse isotropic materials
-  # set Poisson's ratio 12 = 0, 0
-
-  # # Poisson's ratio in plane of isotropy, only used for transverse isotropic materials
-  # set Poisson's ratio 23 = 0.9, 0.9
-
-  # # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
-  # set Shear modulus = 12e3, 40e3
 
   set Viscosity = 0
 
