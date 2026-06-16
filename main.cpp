@@ -76,7 +76,7 @@ int main(int argc, char *argv[]){
   const std::string simMeshSolid[] = {"Test_Solid"};
   const std::string simMeshFluid[] = {"Test_Fluid"};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters_2D_BCS_Half.prm";
+  const std::string paramsPath = "parameters_leaflet.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
