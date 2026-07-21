@@ -177,7 +177,7 @@ subsection Solid solver control
   set Force tolerance  = 1.0e-6
 
   # Multiplier of the penetration distance to compute contact force.
-  set Contact force multiplier = 1e5
+  set Contact force multiplier = 1e8
 end
 
 # Only homogeneous Dirichlet BC is supported, i.e., the prescribed value is always 0.

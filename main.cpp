@@ -70,10 +70,10 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"BCS_2_1"};
-  const std::string simMeshFluid[] = {"Fluid_Half_8.4"};
+  const std::string simMeshSolid[] = {"BC_Half"};
+  const std::string simMeshFluid[] = {"Fluid_Half_8.2"};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters_2D_BCS_Half.prm";
+  const std::string paramsPath = "parameters_2D_BC_Half.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
@@ -139,22 +139,25 @@ int main(int argc, char *argv[]){
             
             // Define penetration criterion, incompressible plane along mid plane
             auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
-              double midplane = 8.8;
-              double gap = 0.8;
+              // double midplane = 8.6;
+              // double gap = 0.8;
               // Check if point is between min and max collision zone
-              if ((p[1] >  (midplane - gap/2)) && (p[1] < (midplane + gap/2))){
-                if (disp[1] < 0){
-                  return (midplane + gap/2 - p[1]);
-                }else{
-                  return (p[1] - (midplane-gap/2));
-                }
-              }
-              return (0);
+              // if ((p[1] >  (midplane - gap/2)) && (p[1] < (midplane + gap/2))){
+              //   if (disp[1] < 0){
+              //     return (midplane + gap/2 - p[1]);
+              //   }else{
+              //     return (p[1] - (midplane-gap/2));
+              //   }
+              // }
+              // return (0);
+              double midplane = 8.2;
+              return (p[1] - midplane);
+
             };
 
             // keeping vertex point data for futureproofing mpi_fsi class, could also overload function instead
             auto penetration_direction = [](const Point<2> &p, const Point<2> &disp) -> Tensor<1, 2> {
-              return (Tensor<1,2>({0,-disp[1]}));
+              return (Tensor<1,2>({0,-1}));
             };
 
             auto body_force = [](const Point<2> &point,
