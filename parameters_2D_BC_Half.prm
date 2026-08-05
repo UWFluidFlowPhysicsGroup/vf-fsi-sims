@@ -30,7 +30,7 @@ subsection Simulation
   set Refinement interval = 1e10
 
   # Checkpoint save interval in second
-  set Save interval = 2.5e-4
+  set Save interval = 1e-3
 
   # Body force which applies to both fluid and solid (acceleration) (cm s^-2) -> (m s^-2 * 100)
   set Gravity = 0.0, 0.0
@@ -58,7 +58,7 @@ subsection Fluid material properties
   set Dynamic viscosity = 1.80e-5
 
   # Fluid density
-  set Fluid density = 1.2e-6
+  set Fluid density = 1.3e-6
 end
 
 subsection Fluid solver control
@@ -130,13 +130,13 @@ subsection Solid material properties
   set Material type = Isotropic, Isotropic
 
   # Solid density (g/cm^3), used by all solid solvers
-  set Solid density = 1.07e-3
+  set Solid density = 1e-3
 
   # Isotropic material properties (Pa)
   # E and nu are only used by Isotropic LinearElastic materials
-  set Young's modulus = 40e3, 10e3
+  set Young's modulus = 2e3, 20e3
 
-  set Poisson's ratio = 0.3, 0.3
+  set Poisson's ratio = 0.4, 0.4
 
   # # Anisotropic material properties
   # # Initial fiber direction for non isotropic materials only. Expecting number of materials * dim values
@@ -157,7 +157,7 @@ subsection Solid material properties
   # # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
   # set Shear modulus = 12e3, 40e3
 
-  set Viscosity = 0.5, 0.5
+  set Viscosity = 0.55, 0.75
 
   # A list of parameters used by hyperelasticMaterial
   set Hyperelastic parameters = 0.5, 1.67, 0.5, 1.67
