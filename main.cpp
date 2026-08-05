@@ -139,8 +139,8 @@ int main(int argc, char *argv[]){
             
             // Define penetration criterion, incompressible plane along mid plane
             auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
-              double midplane = 15;
-              double gap = 2;
+              double midplane = 8.8;
+              double gap = 0.8;
               // Check if point is between min and max collision zone
               if ((p[1] >  (midplane - gap/2)) && (p[1] < (midplane + gap/2))){
                 if (disp[1] < 0){
@@ -184,17 +184,15 @@ int main(int argc, char *argv[]){
                 {
                   if (std::abs(point[boundary_dir[i]] - boundary[i]) < length[i])
                     {
-                      sigmaPML =
-                        sigmaMax *
+                      return sigmaMax *
                         pow((length[i] -
                             std::abs(point[boundary_dir[i]] - boundary[i])) /
                               length[i],
                             4);
                     }
                 }
-              return sigmaPML;
+              return 0.0;
             };
-            
             
             fluid.set_sigma_pml_field(sigma_pml_field);
             fluid.set_body_force(body_force);
