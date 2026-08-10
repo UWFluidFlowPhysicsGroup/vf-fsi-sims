@@ -70,10 +70,10 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"BC_Half"};
+  const std::string simMeshSolid[] = {"BLC_Ellipse"};
   const std::string simMeshFluid[] = {"Fluid_Half_Subdivided"};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters_2D_BC_Half.prm";
+  const std::string paramsPath = "parameters_2D_BLC_Half.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]){
             
             // Define penetration criterion, incompressible plane along mid plane
             auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
-              double midplane = 8.8;
+              double midplane = 14.4;
               double gap = 0.8;
               // Check if point is between min and max collision zone
               if ((p[1] >  (midplane - gap/2)) && (p[1] < (midplane + gap/2))){
