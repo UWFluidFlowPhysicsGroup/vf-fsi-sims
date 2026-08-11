@@ -10,18 +10,11 @@ enable_language(Fortran)
 #setting minimum versions of programs from OpenIFEM CMakeLists
 SET(CMAKE_CXX_STANDARD 17)
 SET(DEAL_II_VERSION_REQUIRED 9.3.0)
-#TODO find proper file version from package info, not needed
-#SET(OPENIFEM_VERSION_REQUIRED 1.0.0)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5.0)
 
-#find deal.II package, mostly imported from examples
-#deal.II_DIR is at /home/nhewko/local/lib/cmake/deal.II
-
-# Might need to change hints for server simulations,
-# server dealii found at $EBROOTDEALII
 find_package(deal.II ${DEAL_II_VERSION_REQUIRED}
-    HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../../../ $ENV{DEAL_II_DIR}
+    HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../../../ $ENV{DEAL_II_DIR} $EBROOTDEALII
 )
 
 IF(NOT ${deal.II_FOUND})
@@ -81,23 +74,68 @@ DEAL_II_INVOKE_AUTOPILOT()
 # targets header files in the include folder
 target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../OpenIFEM/OpenIFEM-source/OpenIFEM/include)
 
-# deal_ii_setup_target(${TARGET})
 # targets libopenifem.so file file from build and imports std::experimental::filesystem
-#target_link_libraries(${TARGET} "/home/nhewko/OpenIFEM/OpenIFEM-build/lib/libopenifem.so" stdc++fs)
 target_link_libraries(${TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/../OpenIFEM/OpenIFEM-build/lib/libopenifem.so stdc++fs)
 
-# use step 7 here
-# https://p4est.github.io/api/p4est-latest/installing_p4est.html
-
 find_package(MPI REQUIRED)
-# message(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${MPI_INCLUDE_PATH})
 target_link_libraries(${TARGET} ${MPI_LIBRARIES})
 
-target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../p4est_build/local/include)
-target_link_libraries(${TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/../p4est_build/local/lib/libp4est.so stdc++fs)
-# target_include_directories(${TARGET} PUBLIC "/home/nhewko/p4est_build/local/include")
-# target_link_libraries(${TARGET} "/home/nhewko/p4est_build/local/lib/libp4est.so" stdc++fs)
+# Create list of all parameter and shell files found in source directory
+# FILES = list of all files in source directory (with directory path)
+# FILE = currently selected file (either .prm or .sh) file with directory (iterating through FILES)
+# FILE_NAME = only file name, removed directory location, which is needed for copying to build directory
+file(GLOB FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/*.prm ${CMAKE_CURRENT_SOURCE_DIR}/*.sh
+)
+
+# Colours being used for file management/updating from source directory
+if(NOT WIN32)
+    string(ASCII 27 Esc)
+    set(ColourReset "${Esc}[m")
+    set(Green       "${Esc}[32m")
+    set(Yellow         "${Esc}[33m")
+endif()
+
+# Iterate through each file found in build directory
+foreach(FILE ${FILES})
+    get_filename_component(FILE_NAME ${FILE} NAME)
+    # Copy the current file from source directory to build if it does not already exist
+    # Files are not overwritten if currently existing to avoid deleting local changes per simulation 
+    if(NOT(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${FILE_NAME}))
+        file(COPY ${FILE_NAME}
+                DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        )
+        MESSAGE(STATUS "${Yellow}COPIED " ${FILE_NAME}
+                    "${ColourReset} from " ${CMAKE_CURRENT_SOURCE_DIR})
+    else()
+        MESSAGE(STATUS "${Green}KEPT " ${FILE_NAME}
+                    "${ColourReset} from " ${CMAKE_CURRENT_SOURCE_DIR})
+    endif()
+endforeach()
+
+
+# Create list of all mesh files from the source directory
+# Same process as other files, just for meshes located in the /meshes folder
+# MESHES = list of all meshes in source directory (with directory path)
+# MESH = currently selected mesh with directory (iterating through MESHES)
+# MESH_NAME = only mesh name, removed directory location, which is needed for copying to build directory
+file(GLOB MESHES
+    ${CMAKE_CURRENT_SOURCE_DIR}/meshes/*.msh
+)
+
+foreach(MESH ${MESHES})
+    get_filename_component(MESH_NAME ${MESH} NAME)
+    if(NOT(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/meshes/${MESH_NAME}))
+        file(COPY ${MESH}
+                DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/meshes)
+        MESSAGE(STATUS "${Yellow}COPIED " ${MESH_NAME}
+                    "${ColourReset} from " ${CMAKE_CURRENT_SOURCE_DIR} "/meshes")
+    else()
+        MESSAGE(STATUS "${Green}KEPT " ${MESH_NAME}
+                    "${ColourReset} from " ${CMAKE_CURRENT_SOURCE_DIR} "/meshes")
+    endif()
+endforeach()
 
 # include(CTest)
 # enable_testing()
