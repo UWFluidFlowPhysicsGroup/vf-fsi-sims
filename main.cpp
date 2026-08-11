@@ -70,10 +70,10 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"BLC_Ellipse"};
-  const std::string simMeshFluid[] = {"Fluid_Half_Subdivided"};
+  const std::string simMeshSolid[] = {"BLC_Ellipse_mm"};
+  const std::string simMeshFluid[] = {"Fluid_Channel_mm"};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters_2D_BLC_Half.prm";
+  const std::string paramsPath = "parameters_2D_BLC_mm.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]){
 
             auto body_force = [](const Point<2> &point,
                                const unsigned int component) -> double {
-              double bfMid = -80;
+              double bfMid = 45;
               double bfLength = 10;
               double bfMax = 0.8e5*1e3;
 		            //Extra 1e3 fudge factor for unit conversions
@@ -169,17 +169,14 @@ int main(int argc, char *argv[]){
               return 0.0;
             };
 
-            // double PMLLengthIn = 2, SigmaMax = 5000;
-            // double SigmaPML = 0.0, LIn = -10
             auto sigma_pml_field = [](const Point<2> &point,
                                 const unsigned int component) -> double {
               (void)component;
-              double sigmaMax = 10e3;
-              double sigmaPML = 0.0;
+              double sigmaMax = 340000;
               
-              std::vector<double> boundary = {-125.0, -200, 390};
-              std::vector<double> length = {30, 20, 20};
-              std::vector<unsigned int> boundary_dir = {0, 1, 0};
+              std::vector<double> boundary = {0.0, 515, -200};
+              std::vector<double> length = {30, 30, 30};
+              std::vector<unsigned int> boundary_dir = {0, 0, 1};
               for (unsigned int i = 0; i < boundary.size(); i++)
                 {
                   if (std::abs(point[boundary_dir[i]] - boundary[i]) < length[i])

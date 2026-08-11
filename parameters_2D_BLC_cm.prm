@@ -55,10 +55,10 @@ end
 
 subsection Fluid material properties
   # The dynamic viscosity
-  set Dynamic viscosity = 1.80e-5
+  set Dynamic viscosity = 1.80e-4
 
   # Fluid density
-  set Fluid density = 1.2e-6
+  set Fluid density = 1.3e-3
 end
 
 subsection Fluid solver control
@@ -66,10 +66,10 @@ subsection Fluid solver control
   set Grad-Div stabilization = 0.1
 
   # Maximum number of Newton iterations at a time step
-  set Max Newton iterations = 12
+  set Max Newton iterations = 16
 
   # The relative tolerance of the nonlinear system residual
-  set Nonlinear system tolerance = 1e-6
+  set Nonlinear system tolerance = 1e-5
 end
 
 subsection Fluid Dirichlet BCs
@@ -130,7 +130,7 @@ subsection Solid material properties
   set Material type = Isotropic, Isotropic, Isotropic
 
   # Solid density (g/cm^3), used by all solid solvers
-  set Solid density = 1e-3
+  set Solid density = 1
 
   # Isotropic material properties (Pa)
   # E and nu are only used by Isotropic LinearElastic materials
