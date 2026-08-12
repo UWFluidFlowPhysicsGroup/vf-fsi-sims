@@ -70,10 +70,10 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"BLC_Ellipse_mm"};
-  const std::string simMeshFluid[] = {"Fluid_Channel_mm"};
+  const std::string simMeshSolid[] = {"BC_M5"};
+  const std::string simMeshFluid[] = {"Fluid_Channel"};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters_2D_BLC_mm.prm";
+  const std::string paramsPath = "parameters_2D_BC.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
@@ -165,9 +165,9 @@ int main(int argc, char *argv[]){
               double bfMax = 50;
               double force = 0.8e5*1e3;
 		          // Extra 1e3 fudge factor for unit conversions
-              // if ((bfMin < p[0]) && (p[0] < bfMax) && component == 0){
-              //   return force;
-              // }
+              if ((bfMin < p[0]) && (p[0] < bfMax) && component == 0){
+                return force;
+              }
               return 0;
             };
 
