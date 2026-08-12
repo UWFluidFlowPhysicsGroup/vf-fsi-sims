@@ -70,10 +70,10 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {"BC_M5"};
+  const std::string simMeshSolid[] = {"BLC_Ellipse"};
   const std::string simMeshFluid[] = {"Fluid_Channel"};
   const std::string meshPath = "meshes/";
-  const std::string paramsPath = "parameters_2D_BC.prm";
+  const std::string paramsPath = "parameters_2D_BLC.prm";
   //read parameters file to determine the dimensions present
   Parameters::AllParameters params(paramsPath);
   GridOut gridOut;
