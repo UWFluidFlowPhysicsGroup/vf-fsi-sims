@@ -139,51 +139,55 @@ int main(int argc, char *argv[]){
             
             // Define penetration criterion, incompressible plane along mid plane
             auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
-              double midplane = 14.4;
-              double gap = 0.8;
+              double plane = 13.97;
               // Check if point is between min and max collision zone
-              if ((p[1] >  (midplane - gap/2)) && (p[1] < (midplane + gap/2))){
-                if (disp[1] < 0){
-                  return (midplane + gap/2 - p[1]);
-                }else{
-                  return (p[1] - (midplane-gap/2));
-                }
+              if (p[1] > plane){
+                return (p[1] - plane);
               }
               return (0);
             };
 
             // keeping vertex point data for futureproofing mpi_fsi class, could also overload function instead
             auto penetration_direction = [](const Point<2> &p, const Point<2> &disp) -> Tensor<1, 2> {
-              return (Tensor<1,2>({0,-disp[1]}));
+              return (Tensor<1,2>({0,-1}));
             };
 
-            auto body_force = [](const Point<2> &point,
+            auto body_force = [](const Point<2> &p,
                                const unsigned int component) -> double {
-              double bfMid = 45;
-              double bfLength = 10;
-              double bfMax = 0.8e5*1e3;
-		            //Extra 1e3 fudge factor for unit conversions
-              if (std::abs(2*(point[0] - bfMid)) < bfLength && component == 0){
-                return bfMax;
-              }
-              return 0.0;
+              // double bfMid = -80;
+              // double bfLength = 10;
+              // double bfMax = 0.8e5*1e3;
+              // if (std::abs(2*(p[0] - bfMid)) < bfLength && component == 0){
+              //   return bfMax;
+              // }
+              // return 0.0;
+              double bfMin = 40;
+              double bfMax = 50;
+              double force = 0.8e5*1e3;
+		          // Extra 1e3 fudge factor for unit conversions
+              // if ((bfMin < p[0]) && (p[0] < bfMax) && component == 0){
+              //   return force;
+              // }
+              return 0;
             };
 
-            auto sigma_pml_field = [](const Point<2> &point,
+            auto sigma_pml_field = [](const Point<2> &p,
                                 const unsigned int component) -> double {
               (void)component;
-              double sigmaMax = 340000;
-              
-              std::vector<double> boundary = {0.0, 515, -200};
+              double sigmaMax = 10e3;
+              std::vector<double> boundary = {0.0, -200, 515};
               std::vector<double> length = {30, 30, 30};
-              std::vector<unsigned int> boundary_dir = {0, 0, 1};
+              std::vector<unsigned int> boundary_dir = {0, 1, 0};
+              // std::vector<double> boundary = {-125.0, -200, 390};
+              // std::vector<double> length = {30, 20, 20};
+              // std::vector<unsigned int> boundary_dir = {0, 1, 0};
               for (unsigned int i = 0; i < boundary.size(); i++)
                 {
-                  if (std::abs(point[boundary_dir[i]] - boundary[i]) < length[i])
+                  if (std::abs(p[boundary_dir[i]] - boundary[i]) < length[i])
                     {
                       return sigmaMax *
                         pow((length[i] -
-                            std::abs(point[boundary_dir[i]] - boundary[i])) /
+                            std::abs(p[boundary_dir[i]] - boundary[i])) /
                               length[i],
                             4);
                     }
