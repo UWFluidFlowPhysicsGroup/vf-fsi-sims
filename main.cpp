@@ -133,10 +133,15 @@ int main(int argc, char *argv[])
           tria_fluid.execute_coarsening_and_refinement();
 
           // Read solid mesh
+          // Triangulation<2> tria_solid;
+          // std::ifstream input_solid("vocal_fold.inp");
+          // grid_in.attach_triangulation(tria_solid);
+          // grid_in.read_abaqus(input_solid);
+
           Triangulation<2> tria_solid;
-          std::ifstream input_solid("vocal_fold.inp");
+          std::ifstream input_solid("BLC_Ellipse_cm.msh");
           grid_in.attach_triangulation(tria_solid);
-          grid_in.read_abaqus(input_solid);
+          grid_in.read_msh(input_solid);
 
           // Translate solid mesh
           Tensor<1, 2> offset({12.7, 0});

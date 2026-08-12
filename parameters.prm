@@ -21,7 +21,7 @@ subsection Simulation
   set End time = 2e-1
 
   # The time step in second
-  set Time step size = 5e-6
+  set Time step size = 1e-6
 
   # The output interval in second
   set Output interval = 4e-5
@@ -155,7 +155,7 @@ subsection Solid Dirichlet BCs
   set Number of Dirichlet BCs = 1
 
   # List all the constrained boundaries here
-  set Dirichlet boundary id = 1
+  set Dirichlet boundary id = 10
 
   # List the constrained components of these boundaries
   # One decimal number indicates one set of constrained components:
@@ -169,15 +169,15 @@ end
 # (Original normal vectors are used to compute the traction.)
 subsection Solid Neumann BCs
   # Indicates how many sets of Neumann boundary conditions to expect.
-  set Number of Neumann BCs = 1
+  set Number of Neumann BCs = 0
 
   # The id, type, and values must appear n_neumann_bcs times.
-  set Neumann boundary id = 2
+  set Neumann boundary id = 0
 
   # Traction/Pressure, currently they cannot coexist.
   set Neumann boundary type = Traction
 
   # If traction, dim*n_solid_neumann_bcs components are expected;
   # if pressure, n_solid_neumann_bcs components are expected.
-  set Neumann boundary values = 0.5, 0
+  set Neumann boundary values = 0, 0
 end
