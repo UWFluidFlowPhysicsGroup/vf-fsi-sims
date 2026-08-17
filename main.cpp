@@ -124,19 +124,14 @@ int main(int argc, char *argv[])
 	    for (unsigned int i : {0, 1, 2, 3})
 	    {
 	      double x = cell.vertex(i)(0);
-	      if (x > 12.7 && x < 15.0)
+        double y = cell.vertex(i)(1);
+	      if (x > 12.7 && x < 15.0 && y > 1.2)
 	      {
-                cell.set_refine_flag();
+          cell.set_refine_flag();
 	      }
-            }
+      }
 	  }
           tria_fluid.execute_coarsening_and_refinement();
-
-          // Read solid mesh
-          // Triangulation<2> tria_solid;
-          // std::ifstream input_solid("vocal_fold.inp");
-          // grid_in.attach_triangulation(tria_solid);
-          // grid_in.read_abaqus(input_solid);
 
           Triangulation<2> tria_solid;
           std::ifstream input_solid("BLC_Ellipse_cm.msh");
@@ -198,7 +193,26 @@ int main(int argc, char *argv[])
 
           fluid.set_body_force(bf);
 
+          // Define penetration criterion, incompressible plane along mid plane
+            auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
+              double plane = 1.397;
+              // Check if point is between min and max collision zone
+              if (p[1] > plane){
+                return (p[1] - plane);
+              }
+              return (0);
+            };
+
+            // keeping vertex point data for futureproofing mpi_fsi class, could also overload function instead
+            auto penetration_direction = [](const Point<2> &p, const Point<2> &disp) -> Tensor<1, 2> {
+              return (Tensor<1,2>({0,-1}));
+            };
+
           MPI::FSI<2> fsi(fluid, solid, params);
+
+          fsi.set_penetration_criterion(penetration_criterion);
+          fsi.set_penetration_direction(penetration_direction);
+
           fsi.run();
         }
       else
