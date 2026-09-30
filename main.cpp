@@ -73,8 +73,8 @@ using namespace dealii;
 
 int main(int argc, char *argv[]){
   // input mesh names for fluid and solid meshes here, using arrays to automate mesh refinement studies or other meshes as long as parameters match
-  const std::string simMeshSolid[] = {""};
-  const std::string simMeshFluid[] = {""};
+  const std::string simMeshSolid[] = {"BC_Half"};
+  const std::string simMeshFluid[] = {"Fluid_Channel"};
   const std::string meshPath = "meshes/";
   const std::string paramsPath = "parameters.prm";
   //read parameters file to determine the dimensions present
@@ -139,7 +139,62 @@ int main(int argc, char *argv[]){
             //combine solid and fluid meshes to make FSI simulation
             Solid::MPI::SharedLinearElasticity<2> solid(triaSolid, params);
             Fluid::MPI::SCnsIM<2> fluid(triaFluid, params);
+
+            auto pml = [](const Point<2> &p,
+                const unsigned int component) -> double {
+              (void)component;
+              // (void)p;
+              double SigmaPML = 0.0;
+              double SigmaPMLMax = 340000;
+              double PMLLength = 0.5;
+              
+              std::vector<double> boundary = {-5, 17.5, -10.0};
+              std::vector<unsigned int> boundary_dir = {0, 0, 1};
+              // For tube acoustics
+              for (unsigned int i = 0; i < boundary.size(); ++i)
+                {
+                  if (std::abs(p[boundary_dir[i]] - boundary[i]) < PMLLength)
+                  // A quadratic increasing function from boundary-PMLlength to the boundary
+                  SigmaPML = SigmaPMLMax * pow((PMLLength + boundary[i] - p[boundary_dir[i]]) / PMLLength, 4);
+                }
+              return SigmaPML;
+            };
+
+            fluid.set_sigma_pml_field(pml);
+
+            auto bf = [](const Point<2> &p,
+                               const unsigned int component) -> double {
+              // Tensor<1, dim> value;
+              double rho = 1.3e-3;
+              double bf = 1.0e4/rho;
+
+              if (p[0] > -4.0 - 5e-4 && p[0] < -3.5 + 5e-4 && component == 0){
+                return bf;
+              }
+              return 0.0;
+            };
+
+            fluid.set_body_force(bf);
+
+            auto penetration_criterion = [](const Point<2> &p, const Point<2> &disp) -> double {
+              double plane = 0.5;
+              // Check if point is between min and max collision zone
+              if (p[1] > plane){
+                return (p[1] - plane);
+              }
+              return (0);
+            };
+
+            // keeping vertex point data for futureproofing mpi_fsi class, could also overload function instead
+            auto penetration_direction = [](const Point<2> &p, const Point<2> &disp) -> Tensor<1, 2> {
+              return (Tensor<1,2>({0,-1}));
+            };
+
             MPI::FSI<2> fsi(fluid, solid, params, true);
+
+            fsi.set_penetration_criterion(penetration_criterion);
+            fsi.set_penetration_direction(penetration_direction);
+
             fsi.run();
           }else{
             //error occured
@@ -208,42 +263,37 @@ int main(int argc, char *argv[]){
                   << "Check if " << paramsPath << "exists or has valid dimensions";
         exit(0);
       }
-<<<<<<< HEAD
-
-=======
-      
->>>>>>> vocalFolds
-      if (MPI::COMM_WORLD.Get_rank() == 0){
-        //define path to current file location
-        std::filesystem::path p = std::filesystem::current_path();
+      // if (MPI::COMM_WORLD.Get_rank() == 0){
+      //   //define path to current file location
+      //   std::filesystem::path p = std::filesystem::current_path();
         
-        std::string outputFolder;
-        if (params.simulation_type == "Solid"){
-          outputFolder = meshSolid;
-        }else if(params.simulation_type == "Fluid"){
-          outputFolder = meshFluid;
-        }else if(params.simulation_type == "FSI"){
-          outputFolder = meshSolid + "_" + meshFluid;
-        }  
-        //moving file system info is broken for mpi, maybe need to stop mpi connection first?
-        //create folder with a title corresponding to the current solid/fluid mesh names
-        std::filesystem::create_directory(p / outputFolder);
+      //   std::string outputFolder;
+      //   if (params.simulation_type == "Solid"){
+      //     outputFolder = meshSolid;
+      //   }else if(params.simulation_type == "Fluid"){
+      //     outputFolder = meshFluid;
+      //   }else if(params.simulation_type == "FSI"){
+      //     outputFolder = meshSolid + "_" + meshFluid;
+      //   }  
+      //   //moving file system info is broken for mpi, maybe need to stop mpi connection first?
+      //   //create folder with a title corresponding to the current solid/fluid mesh names
+      //   std::filesystem::create_directory(p / outputFolder);
 
-        //iterate through each file in the main directory
-        for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
-          //checks if each file is relevant to simulation results/output
-            //vtu -> info from separate segmented meshes, one for each processor being used
-            //pvtu -> joins vtu files together for a single timestep, only needed for parallel processes
-            //pvd -> joins pvtu/vtu files together through whole simulation
+      //   //iterate through each file in the main directory
+      //   for(const auto& dirEntry : std::filesystem::directory_iterator(p)){
+      //     //checks if each file is relevant to simulation results/output
+      //       //vtu -> info from separate segmented meshes, one for each processor being used
+      //       //pvtu -> joins vtu files together for a single timestep, only needed for parallel processes
+      //       //pvd -> joins pvtu/vtu files together through whole simulation
             
-          //If files are not moved, then simulations will be overwritten with following simulations
-          if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd" || dirEntry.path().extension() == ".pvtu"){
+      //     //If files are not moved, then simulations will be overwritten with following simulations
+      //     if (dirEntry.path().extension() == ".vtu" || dirEntry.path().extension() == ".pvd" || dirEntry.path().extension() == ".pvtu"){
             
-            //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
-            std::filesystem::rename(p / dirEntry.path().filename(), p / outputFolder / dirEntry.path().filename());
-          }
-        }
-      }
+      //       //moves the "selected" outputs to the new folder corresponding to the fluid mesh name
+      //       std::filesystem::rename(p / dirEntry.path().filename(), p / outputFolder / dirEntry.path().filename());
+      //     }
+      //   }
+      // }
     }
   }
 }
