@@ -21,7 +21,7 @@ subsection Simulation
   set End time = 2.5e-1
 
   # The time step in second
-  set Time step size = 1e-6
+  set Time step size = 5e-7
 
   # The output interval frequency
   set Output interval = 1e-4
