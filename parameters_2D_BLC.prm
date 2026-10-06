@@ -157,7 +157,7 @@ subsection Solid material properties
   # # Shear modulus (Pa) involving fiber direction, only used for transverse isotropic materials
   # set Shear modulus = 12e3, 40e3
 
-  set Viscosity = 0.55, 0.75, 0.5
+  set Viscosity = 0.055, 0.075, 0.05
 
   # A list of parameters used by hyperelasticMaterial
   set Hyperelastic parameters = 0.5, 1.67, 0.5, 1.67, 0.5, 1.67
